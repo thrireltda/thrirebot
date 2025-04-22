@@ -1,0 +1,37 @@
+{
+  "name": "thrirebot",
+  "version": "1.0.0",
+  "description": "A discord bot for thrire, inc.",
+  "keywords": [
+    "thrire",
+    "bot",
+    "thrirebot",
+    "discord"
+  ],
+  "homepage": "https://github.com/thrireinc/thrirebot#readme",
+  "bugs": {
+    "url": "https://github.com/thrireinc/thrirebot/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thrireinc/thrirebot.git"
+  },
+  "license": "ISC",
+  "author": "thrire, inc.",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "thrirebot-test"
+  },
+  "dependencies": {
+    "@discordjs/builders": "^1.10.1",
+    "@discordjs/rest": "^2.4.3",
+    "bgutils-js": "^3.2.0",
+    "discord-api-types": "^0.37.120",
+    "discord-player": "^7.1.0",
+    "discord-player-youtubei": "^1.4.5",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.5.0",
+    "octokit": "^4.1.3"
+  }
+}
