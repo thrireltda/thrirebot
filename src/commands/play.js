@@ -4,41 +4,37 @@ const { QueryType, useMainPlayer} = require('discord-player');
 
 module.exports =
 {
-    data: new SlashCommandBuilder().setName("play").setDescription("Plays a song from youtube").addStringOption(option =>
+    data: new SlashCommandBuilder().setName("play").setDescription("Plays a song").addStringOption(option =>
     {
         return option.setName("url").setDescription("url of the song").setRequired(true);
     }),
     execute: async ({client, interaction}) =>
     {
-        //Todo: not in a voice channel
+        const query = interaction.options.getString("url");
+        const player = useMainPlayer();
 
-        const queue = await client.player.queues.create(interaction.guild)
-        if (!queue.connection) await queue.connect(interaction.member.voice.channel)
-
-        let url = interaction.options.getString("url");
-        const mainPlayer = useMainPlayer();
-        const result = await mainPlayer.search(url,
-        {
-            requestedBy: interaction.user,
-            searchEngine: QueryType.YOUTUBE_VIDEO,
+        // Tocar diretamente com player.play() + nodeOptions
+        const result = await player.play(interaction.member.voice.channel, query, {
+            nodeOptions: {
+                metadata: interaction.channel, // necessário para enviar mensagens depois
+                bufferingTimeout: 15000,
+                leaveOnEnd: true,
+                leaveOnEndCooldown: 300000,
+                leaveOnStop: true,
+                leaveOnStopCooldown: 300000,
+                leaveOnEmpty: true,
+                leaveOnEmptyCooldown: 60000,
+                skipOnNoStream: true
+            }
         });
 
-        if (result.tracks.length === 0)
-        {
-            return interaction.reply({
-                content: "❌ Nenhuma música foi encontrada.",
-                ephemeral: true
-            });
-        }
+        const track = result.track;
 
-        const song = result.tracks[0];
-        await queue.addTrack(song);
-        if (!queue.isPlaying()) await queue.node.play();
+        const embed = new EmbedBuilder()
+            .setDescription(`Added **[${track.title}](${track.url})** to the queue`)
+            .setThumbnail(track.thumbnail)
+            .setFooter({ text: `Duration: ${track.duration}` });
 
-        let embed = new EmbedBuilder()
-        .setDescription(`Added **[${song.title}](${song.url})** to the queue`)
-        .setThumbnail(song.thumbnail)
-        .setFooter({text: `Duration: ${song.duration}`});
-        await interaction.reply({embeds: [embed]});
+        await interaction.reply({ embeds: [embed] });
     }
 };

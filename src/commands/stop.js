@@ -13,6 +13,6 @@ module.exports =
         }
 
         queue.node.stop();
-        await interaction.reply("Bye bye.");
+        await interaction.reply("");
     }
 };
