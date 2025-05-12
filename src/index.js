@@ -1,11 +1,13 @@
 console.debug = () => {};
 
-require('dotenv').config();
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
-const client = require('./bot');
-const loadCommands = require('./loader');
-const { Events } = require('discord.js');
+import { config } from 'dotenv';
+import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v9';
+import client from './bot.js';
+import loadCommands from './loader.js';
+import { Events } from 'discord.js';
+
+config();
 
 // 1. Carregue os comandos
 loadCommands(client);

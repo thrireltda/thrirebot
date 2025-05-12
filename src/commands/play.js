@@ -1,8 +1,8 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-const { EmbedBuilder } = require('discord.js');
-const { QueryType, useMainPlayer} = require('discord-player');
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { EmbedBuilder } from 'discord.js';
+import { useMainPlayer} from 'discord-player';
 
-module.exports =
+export default
 {
     data: new SlashCommandBuilder().setName("play").setDescription("Plays a song").addStringOption(option =>
     {

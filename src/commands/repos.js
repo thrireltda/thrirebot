@@ -1,8 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { Octokit } = require('octokit');
+import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { Octokit } from 'octokit';
+
 const octokit = new Octokit({auth: process.env.GITHUB_API_KEY,});
 
-module.exports =
+export default
 {
     data: new SlashCommandBuilder().setName('repos').setDescription('** ADD DESCRIPTION **'),
     execute: async ({client, interaction}) =>

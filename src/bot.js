@@ -1,7 +1,7 @@
-const { Client, Collection, Events } = require('discord.js');
-const { Player, useMainPlayer } = require('discord-player');
-const { DefaultExtractors } = require('@discord-player/extractor');
-const { YoutubeiExtractor } = require('discord-player-youtubei');
+import { Client, Collection, Events } from 'discord.js';
+import { Player, useMainPlayer } from 'discord-player';
+import { DefaultExtractors } from '@discord-player/extractor';
+import { YoutubeiExtractor } from 'discord-player-youtubei';
 
 const client = new Client({ intents: ['Guilds', 'GuildMessages', 'MessageContent', 'GuildVoiceStates'] });
 client.commands = new Collection();
@@ -19,4 +19,4 @@ async function setupPlayer()
 }
 setupPlayer();
 
-module.exports = client;
+export default client;
