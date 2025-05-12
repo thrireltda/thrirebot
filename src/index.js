@@ -1,5 +1,6 @@
 console.debug = () => {};
 
+import * as crypto from 'crypto';
 import { config } from 'dotenv';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
