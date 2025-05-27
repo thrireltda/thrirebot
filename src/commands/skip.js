@@ -1,24 +1,15 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { EmbedBuilder } from 'discord.js';
 
 export default
 {
-    data: new SlashCommandBuilder().setName("skip").setDescription("Skips the current playing song."),
+    data: new SlashCommandBuilder().setName("skip").setDescription("skips the current playing song"),
     execute: async ({client, interaction}) =>
     {
-        const queue = client.player.queues.get(interaction.guild.id);
-        if (!queue)
-        {
-            // Todo: No song playing
-            return;
-        }
-
-        const song = queue.currentTrack;
+        const queue = await client.player.queues.get(interaction.guild.id);
+        if (!queue) return;
         queue.node.skip();
 
-        let embed = new EmbedBuilder()
-        .setDescription(`Skipped **${song.title}`)
-        .setThumbnail(song.thumbnail)
-        await interaction.reply({embeds: [embed]});
+        await interaction.deferReply();
+        await interaction.deleteReply();
     }
 };

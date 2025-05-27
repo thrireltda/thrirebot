@@ -3,7 +3,8 @@ import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname } from 'path';
 
-async function loadCommands(client) {
+export default async function (client)
+{
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
     const commandsPath = path.join(__dirname, 'commands');
@@ -15,8 +16,6 @@ async function loadCommands(client) {
         const fileUrl = pathToFileURL(filePath);
         const commandModule = await import(fileUrl.href);
         const command = commandModule.default || commandModule;
-        client.commands.set(command.data.name, command);
+        await client.commands.set(command.data.name, command);
     }
-}
-
-export default loadCommands;
+};

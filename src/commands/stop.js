@@ -2,17 +2,14 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 
 export default
 {
-    data: new SlashCommandBuilder().setName("stop").setDescription("Stops the current playing song."),
+    data: new SlashCommandBuilder().setName("stop").setDescription("stops the current playing song"),
     execute: async ({client, interaction}) =>
     {
-        const queue = client.player.queues.get(interaction.guild.id);
-        if (!queue)
-        {
-            // Todo: No song playing
-            return;
-        }
-
+        const queue = await client.player.queues.get(interaction.guild.id);
+        if (!queue) return;
         queue.node.stop();
-        await interaction.reply("");
+
+        await interaction.deferReply();
+        await interaction.deleteReply();
     }
 };
