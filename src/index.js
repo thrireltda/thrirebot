@@ -5,6 +5,7 @@ import client from './bot.js';
 import loadCommands from './loader.js';
 import {EmbedBuilder, Events} from 'discord.js';
 import { useMainPlayer } from 'discord-player';
+import freegames from './freegames.js';
 
 
 config();
@@ -58,3 +59,6 @@ useMainPlayer().events.on('playerStart', (queue, track) =>
 
 // 4. Faça login
 client.login(process.env.TOKEN);
+
+// 5. Cron
+freegames.execute(client);
