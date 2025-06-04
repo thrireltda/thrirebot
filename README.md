@@ -1,5 +1,11 @@
 # thrirebot
 
-## Comando `codex`
+## Comandos de IA
 
-Este bot conta com o comando `/codex` que permite enviar uma descrição ao Codex (OpenAI) para gerar novos códigos ou sugerir modificações. Para utilizar é necessário definir a variável de ambiente `OPENAI_API_KEY` com sua chave da API.
+### `/pergunta`
+
+Envia uma pergunta para a IA (ChatGPT) e retorna a resposta. Defina a variável de ambiente `OPENAI_API_KEY` para utilizar.
+
+### `/codex`
+
+Envia uma solicitação ao Codex para gerar patches de código e cria uma pull request automaticamente no repositório configurado. Para funcionar também é necessário definir `GITHUB_API_KEY` e, opcionalmente, `PR_REPO_OWNER` e `PR_REPO_NAME`.
