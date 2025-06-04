@@ -3,15 +3,28 @@ import { Octokit } from 'octokit';
 
 const octokit = new Octokit({ auth: process.env.GITHUB_API_KEY });
 
+let repoChoices = [];
+try {
+    const response = await octokit.request('GET /orgs/thrireinc/repos');
+    repoChoices = response.data.map(repo => ({ name: repo.name, value: repo.name })).slice(0, 25);
+} catch (error) {
+    console.error('Erro ao carregar repositórios:', error);
+}
+
 export default {
     data: new SlashCommandBuilder()
         .setName('pulls')
         .setDescription('Lista todas as pull requests de um reposit\u00f3rio.')
-        .addStringOption(option =>
-            option.setName('repo')
+        .addStringOption(option => {
+            option
+                .setName('repo')
                 .setDescription('Reposit\u00f3rio no formato owner/nome ou apenas nome para repos da thrireinc')
-                .setRequired(true)
-        ),
+                .setRequired(true);
+            if (repoChoices.length > 0) {
+                option.addChoices(...repoChoices);
+            }
+            return option;
+        }),
     execute: async ({ interaction }) => {
         const input = interaction.options.getString('repo');
         const [owner, repo] = input.includes('/') ? input.split('/') : ['thrireinc', input];
