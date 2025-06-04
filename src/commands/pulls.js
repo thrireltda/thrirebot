@@ -14,7 +14,7 @@ try {
 export default {
     data: new SlashCommandBuilder()
         .setName('pulls')
-        .setDescription('Lista todas as pull requests de um reposit\u00f3rio.')
+        .setDescription('Lista as pull requests abertas de um reposit\u00f3rio.')
         .addStringOption(option => {
             option
                 .setName('repo')
@@ -33,7 +33,7 @@ export default {
             const response = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
                 owner,
                 repo,
-                state: 'all'
+                state: 'open'
             });
 
             const fields = response.data.map(pr => ({
