@@ -8,7 +8,7 @@ export default {
     name: "dailyFreeGames",
     once: true,
     execute(client) {
-        cron.schedule('45 23 * * *', async () => {
+        cron.schedule('0 11 * * *', async () => {
             const channel = await client.channels.fetch(CHANNEL_ID);
             if (!channel) return;
 
