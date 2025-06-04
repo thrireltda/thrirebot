@@ -5,9 +5,10 @@ import client from './bot.js';
 import loadCommands from './loader.js';
 import {EmbedBuilder, Events} from 'discord.js';
 import { useMainPlayer } from 'discord-player';
+import {createGlobalProxyAgent} from 'global-agent';
 import freegames from './freegames.js';
 
-
+createGlobalProxyAgent();
 config();
 
 // 1. Carregue os comandos
