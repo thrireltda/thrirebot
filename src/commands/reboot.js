@@ -5,7 +5,7 @@ import {EmbedBuilder} from "discord.js";
 export default
 {
     data: new SlashCommandBuilder().setName("reboot").setDescription("Reboots the server"),
-    execute: async (interaction) =>
+    execute: async ({ interaction }) =>
     {
         const embed = new EmbedBuilder()
         .setColor(0xffcc00)
