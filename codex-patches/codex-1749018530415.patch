@@ -1,0 +1,17 @@
+```diff
+diff --git a/src/commands/test.js b/src/commands/test.js
+new file mode 100644
+index 0000000..e69de29
+diff --git a/src/thrirebot.js b/src/thrirebot.js
+index 1234567..890abcd 100644
+--- a/src/thrirebot.js
++++ b/src/thrirebot.js
+@@ -25,6 +25,7 @@ const commands = {
+   'ping': require('./commands/ping'),
+   'help': require('./commands/help'),
+   'info': require('./commands/info'),
++  'test': require('./commands/test'),
+ };
+ 
+ client.on('message', message => {
+```
