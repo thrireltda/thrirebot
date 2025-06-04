@@ -1,0 +1,16 @@
+```diff
+diff --git a/src/commands/test.js b/src/commands/test.js
+index 5c5b1e2..7e3a7b7 100644
+--- a/src/commands/test.js
++++ b/src/commands/test.js
+@@ -1,5 +1,6 @@
+ const Command = require('../structures/Command');
+ 
+ class TestCommand extends Command {
++    async run(message, args) {
++        message.channel.send('Olá, Mundo!');
++    }
+ }
+ 
+ module.exports = TestCommand;
+```
