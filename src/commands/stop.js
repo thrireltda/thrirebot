@@ -8,7 +8,11 @@ export default
     execute: async ({client, interaction}) =>
     {
         const queue = await client.player.queues.get(interaction.guild.id);
-        if (!queue) return;
+        if (!queue)
+        {
+            await interaction.reply({ content: 'Nenhuma música tocando.', ephemeral: true });
+            return;
+        }
 
         queue.clear();
         queue.node.stop();
