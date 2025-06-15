@@ -6,8 +6,6 @@ import client from './bot.js';
 import loadCommands from './loader.js';
 import {EmbedBuilder, Events} from 'discord.js';
 import { useMainPlayer } from 'discord-player';
-import freegames from './freegames.js';
-
 
 // 1. Carregue os comandos
 loadCommands(client);
@@ -27,31 +25,21 @@ client.once('ready', async () =>
 // 3. Gerencie interações
 client.on(Events.InteractionCreate, async interaction =>
 {
-    client.on(Events.InteractionCreate, async interaction =>
+    const command = interaction.commandName;                      // "gh"
+    const group = interaction.options.getSubcommandGroup(false); // "pr"
+    const sub = interaction.options.getSubcommand(false);        // "approve"
+    const baseName = [command, group, sub].filter(Boolean).join(".");
+
+    let handler;
+    try
     {
-        const command = interaction.commandName;                      // "gh"
-        const group = interaction.options.getSubcommandGroup(false); // "pr"
-        const sub = interaction.options.getSubcommand(false);        // "approve"
-        const baseName = [command, group, sub].filter(Boolean).join(".");
-        if (interaction.isAutocomplete())
-        {
-            try {
-                const handler = await import(`./handlers/autocomplete/${baseName}.js`).then(m => m.default);
-                return handler(interaction);
-            } catch (e) {
-                console.warn("🔎 Sem autocomplete handler para:", baseName);
-            }
-        }
-        if (interaction.isChatInputCommand())
-        {
-            try {
-                const handler = await import(`./handlers/commands/${baseName}.js`).then(m => m.default);
-                return handler({ interaction, client });
-            } catch (e) {
-                console.warn("🔎 Sem command handler para:", baseName);
-            }
-        }
-    });
+        handler = await import(`./handlers/${baseName}.js`).then(m => m.default);
+    }
+    catch (e)
+    {
+        console.warn("🔎 Sem autocomplete handler para:", baseName);
+    }
+    if (handler) return handler(interaction);
 });
 useMainPlayer().events.on('playerStart', (queue, track) =>
 {
@@ -65,5 +53,3 @@ useMainPlayer().events.on('playerStart', (queue, track) =>
 });
 // 4. Faça login
 client.login(process.env.TOKEN);
-// 5. Cron
-freegames.execute(client);

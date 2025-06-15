@@ -19,13 +19,15 @@ export default
         .addSubcommandGroup(group =>
             group.setName("pr").setDescription("aa")
             .addSubcommand(subcommand =>
-                    subcommand.setName("approve").setDescription("aa")
-                    .addStringOption(option => option.setName("repo").setDescription("Repositório da organização").setRequired(true).setAutocomplete(true))
-                    .addStringOption(option => option.setName("pr").setDescription("Número da pull request").setRequired(true).setAutocomplete(true))
+                subcommand.setName("approve").setDescription("aa")
+                .addStringOption(option => option.setName("repo").setDescription("Repositório da organização").setRequired(true).setAutocomplete(true))
+                .addStringOption(option => option.setName("pr").setDescription("Número da pull request").setRequired(true).setAutocomplete(true))
             )
         ),
     execute: async ({interaction}) =>
     {
+        await interaction.deferReply({ ephemeral: true }); // <- GARANTE tempo para processar
+
         const group = interaction.options.getSubcommandGroup();
         const subcommand = interaction.options.getSubcommand();
 
@@ -36,60 +38,64 @@ export default
                 {
                     case "login":
                         const token = interaction.options.getString("token");
-                        await interaction.deferReply({ ephemeral: true }); // <- GARANTE tempo para processar
                         await fetch("https://api.github.com/user", {
                             headers: { Authorization: `token ${token}` }
                         })
-                            .then(res =>
+                        .then(res =>
+                        {
+                            if (!res.ok)
                             {
-                                if (!res.ok) {
-                                    const failEmbed = new EmbedBuilder()
-                                        .setTitle("❌ Falha na autenticação")
-                                        .setDescription("Token inválido ou com permissões insuficientes.")
-                                        .setColor(0xcc0000);
-                                    interaction.editReply({ embeds: [failEmbed], ephemeral: true });
-                                    throw new Error("Token inválido"); // ❗ Interrompe o restante dos .then()
-                                }
-                                return res.json();
-                            })
-                            .then(async data =>
+                                const failEmbed = new EmbedBuilder()
+                                .setTitle("❌ Falha na autenticação")
+                                .setDescription("Token inválido ou com permissões insuficientes.")
+                                .setColor(0xcc0000);
+
+                                interaction.editReply({ embeds: [failEmbed], ephemeral: true });
+                                throw new Error("Token inválido"); // ❗ Interrompe o restante dos .then()
+                            }
+                            return res.json();
+                        })
+                        .then(async data =>
+                        {
+                            if (!data) return;
+
+                            const email = data.email || data.login;
+                            const encryptedToken = encrypt(token);
+
+                            const fs = await import('fs/promises');
+                            const credentialsPath = './github_credentials.json';
+                            if (!existsSync(credentialsPath))
+                                await fs.writeFile(credentialsPath, JSON.stringify({}, null, 2));
+
+                            let file = {};
+                            try
                             {
-                                if (!data) return;
-
-                                const email = data.email || data.login;
-                                const encryptedToken = encrypt(token);
-
-                                const fs = await import('fs/promises');
-                                const credentialsPath = './github_credentials.json';
-                                if (!existsSync(credentialsPath)) {
-                                    await fs.writeFile(credentialsPath, JSON.stringify({}, null, 2));
-                                }
-
-                                let file = {};
-                                try {
-                                    const raw = await fs.readFile(credentialsPath, 'utf8');
-                                    file = JSON.parse(raw);
-                                } catch (e) { /* arquivo ainda não existe*/ }
-
-                                file[interaction.user.id] = { email, token: encryptedToken };
-                                await fs.writeFile(credentialsPath, JSON.stringify(file, null, 2));
-
-                                const successEmbed = new EmbedBuilder()
-                                    .setTitle("✅Autenticação realizado com sucesso!")
-                                    .setDescription(`GitHub autenticado para **${email}**.`)
-                                    .setColor(0x2ecc71);
-                                return interaction.editReply({ embeds: [successEmbed], ephemeral: true });
-                            })
-                            .catch(error =>
+                                const raw = await fs.readFile(credentialsPath, 'utf8');
+                                file = JSON.parse(raw);
+                            }
+                            catch (e)
                             {
-                                console.error("Erro na autenticação:", error);
-                                if (!interaction.replied && !interaction.deferred) {
-                                    interaction.editReply({
+                                /* arquivo ainda não existe */
+                            }
+
+                            file[interaction.user.id] = { email, token: encryptedToken };
+                            await fs.writeFile(credentialsPath, JSON.stringify(file, null, 2));
+
+                            const successEmbed = new EmbedBuilder()
+                            .setTitle("✅Autenticação realizado com sucesso!")
+                            .setDescription(`GitHub autenticado para **${email}**.`)
+                            .setColor(0x2ecc71);
+                            return interaction.editReply({ embeds: [successEmbed], ephemeral: true });
+                        })
+                        .catch(error =>
+                        {
+                            console.error("Erro na autenticação:", error);
+                            if (!interaction.replied && !interaction.deferred)
+                                interaction.editReply({
                                         content: "❌ Ocorreu um erro ao tentar autenticar com o GitHub.",
                                         ephemeral: true
                                     });
-                                }
-                            });
+                        });
                 }
                 break;
             case "pr":
@@ -102,7 +108,7 @@ export default
 
                         const credentialsPath = "./github_credentials.json";
                         if (!existsSync(credentialsPath)) {
-                            return interaction.reply({ content: "❌ Você ainda não fez login com o GitHub.", ephemeral: true });
+                            return interaction.editReply({ content: "❌ Você ainda não fez login com o GitHub.", ephemeral: true });
                         }
 
                         let token;
@@ -110,7 +116,7 @@ export default
                             const raw = await readFile(credentialsPath, "utf8");
                             const credentials = JSON.parse(raw);
                             if (!credentials[userId]) {
-                                return interaction.reply({ content: "❌ Token do GitHub não encontrado para este usuário.", ephemeral: true });
+                                return interaction.editReply({ content: "❌ Token do GitHub não encontrado para este usuário.", ephemeral: true });
                             }
                             token = decrypt(credentials[userId].token);
                         } catch (error) {

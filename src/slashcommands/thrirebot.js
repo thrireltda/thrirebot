@@ -9,14 +9,10 @@ export default
     data: new SlashCommandBuilder().setName("thrirebot").setDescription("aa")
         .addSubcommandGroup(group =>
             group.setName("repo").setDescription("aa")
-                .addSubcommand(subcommand =>
-                    subcommand.setName("cb").setDescription("aa")
-                        .addStringOption(option =>
-                        {
-                            option.setName("name").setDescription("aa").setRequired(true).setAutocomplete(true) // 🔥 aqui
-                            return option;
-                        })
-                )
+            .addSubcommand(subcommand =>
+                subcommand.setName("cb").setDescription("aa")
+                .addStringOption(option => option.setName("name").setDescription("aa").setRequired(true).setAutocomplete(true))
+            )
         ),
     execute: async ({interaction}) =>
     {

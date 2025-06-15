@@ -5,6 +5,8 @@ import { dirname } from 'path';
 
 export default async function (client)
 {
+    console.log("Importing commands")
+
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
     const commandsPath = path.join(__dirname, 'slashcommands');
@@ -18,4 +20,6 @@ export default async function (client)
         const command = commandModule.default || commandModule;
         await client.commands.set(command.data.name, command);
     }
+
+    console.log("Ended importing commands")
 };

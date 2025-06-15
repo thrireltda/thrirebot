@@ -1,8 +1,8 @@
 // src/handlers/autocomplete/gh.pr.approve.js
 import { Octokit } from "octokit";
 import { readFile } from "fs/promises";
-import { decrypt } from "../../utils/crypto.js";
-import { getCache, setCache } from "../../utils/cache.js";
+import { decrypt } from "../utils/crypto.js";
+import { getCache, setCache } from "../utils/cache.js";
 
 export default async function (interaction) {
     const userId = interaction.user.id;

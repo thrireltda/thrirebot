@@ -18,7 +18,8 @@ export default
         try
         {
             const {track} = await player.play(channel, query, {nodeOptions: {
-                    metadata: interaction
+                    metadata: interaction,
+                    stream: true,
                 }});
 
             const embed = new EmbedBuilder()

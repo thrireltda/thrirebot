@@ -1,7 +1,7 @@
 // src/handlers/thrirebot.repo.cb.js
 import { Octokit } from "octokit";
 import fs from "fs/promises";
-import { decrypt } from "../../utils/crypto.js";
+import { decrypt } from "../utils/crypto.js";
 
 export async function handleAutocomplete(interaction) {
     const focusedOption = interaction.options.getFocused(true);
