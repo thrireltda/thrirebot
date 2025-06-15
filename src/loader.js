@@ -7,7 +7,7 @@ export default async function (client)
 {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-    const commandsPath = path.join(__dirname, 'commands');
+    const commandsPath = path.join(__dirname, 'slashcommands');
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
     for (const file of commandFiles)
