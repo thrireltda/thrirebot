@@ -1,8 +1,6 @@
-import { Client, Events } from 'discord.js';
+import { Client, Events, REST, Routes } from 'discord.js';
 import dotenv from 'dotenv';
-import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v9';
-import buildAllCommands from './commands/builder.js';
+import buildAllCommands from './utils/builder.js';
 
 dotenv.config();
 
@@ -15,19 +13,34 @@ let commandList = [];
 client.once('ready', async () => {
     console.log(`🤖 Logado como ${client.user.tag}`);
 
-    // Carrega e registra os comandos dinamicamente
+    // 1. Carrega os comandos
     commandList = await buildAllCommands();
 
+    // 2. Transforma em JSON para registrar no Discord
     const slashData = commandList.map(cmd => cmd.data.toJSON());
 
-    const rest = new REST({ version: '9' }).setToken(process.env.TOKEN);
-    await rest.put(
-        Routes.applicationCommands(process.env.CLIENT_ID),
-        { body: slashData }
-    );
+    // 3. Envia os comandos atualizados
+    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
-    console.log(`✅ ${commandList.length} comandos registrados.`);
+    try {
+        // 🧹 Limpa comandos antigos
+        await rest.put(
+            Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+            { body: [] }
+        );
+        console.log('🧼 Comandos antigos removidos.');
+
+        // ✅ Registra comandos novos
+        await rest.put(
+            Routes.applicationCommands(process.env.CLIENT_ID),
+            { body: slashData }
+        );
+        console.log(`✅ ${slashData.length} comandos registrados com sucesso.`);
+    } catch (error) {
+        console.error('❌ Falha ao registrar comandos:', error);
+    }
 });
+
 
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) return;
@@ -37,11 +50,12 @@ client.on(Events.InteractionCreate, async interaction => {
     const sub = interaction.options?.getSubcommand(false);
     const baseName = [command, group, sub].filter(Boolean).join('.');
 
-    const cmd = commandList.find(c =>
-        c.data.name === command // comando base
-    );
+    const cmd = commandList.find(c => c.data.name === command);
 
-    if (!cmd) return console.warn(`❌ Comando base '${command}' não encontrado.`);
+    if (!cmd) {
+        console.warn(`❌ Comando base '${command}' não encontrado.`);
+        return;
+    }
 
     try {
         if (interaction.isChatInputCommand() && cmd.execute)

@@ -7,6 +7,7 @@ import { decrypt } from "../../../utils/crypto.js";
 
 export default {
     data: new SlashCommandSubcommandBuilder()
+        .setName("approve")
         .setDescription("Aprova uma pull request")
         .addStringOption(option => option.setName('repo').setAutocomplete(true).setDescription('Repositório').setRequired(true))
         .addStringOption(option => option.setName('pr').setAutocomplete(true).setDescription('Número da PR').setRequired(true)),
@@ -49,7 +50,7 @@ export default {
             });
         }
     },
-    autocomplete: async ({interaction}) =>
+    autocomplete: async (interaction) =>
     {
         const userId = interaction.user.id;
         const focused = interaction.options.getFocused(true);
