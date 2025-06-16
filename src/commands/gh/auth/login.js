@@ -6,6 +6,7 @@ import { existsSync } from 'fs';
 export default
 {
     data: new SlashCommandSubcommandBuilder()
+        .setName("login")
         .setDescription("Faz login no GitHub")
         .addStringOption(option => option.setName("token").setDescription("Token pessoal").setRequired(true)),
     execute: async ({interaction}) =>
