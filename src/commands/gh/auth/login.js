@@ -8,7 +8,7 @@ export default
     data: new SlashCommandSubcommandBuilder()
         .setDescription("Faz login no GitHub")
         .addStringOption(option => option.setName("token").setDescription("Token pessoal").setRequired(true)),
-    execute: async (interaction) =>
+    execute: async ({interaction}) =>
     {
         await interaction.deferReply({ ephemeral: true }); // <- GARANTE tempo para processar
 
