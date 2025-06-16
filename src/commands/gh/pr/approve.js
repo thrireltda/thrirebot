@@ -50,7 +50,7 @@ export default {
             });
         }
     },
-    autocomplete: async (interaction) =>
+    autocomplete: async ({interaction}) =>
     {
         const userId = interaction.user.id;
         const focused = interaction.options.getFocused(true);
