@@ -1,14 +1,19 @@
-import { SlashCommandBuilder } from '@discordjs/builders';
+import {SlashCommandBuilder, SlashCommandSubcommandBuilder} from '@discordjs/builders';
 import { EmbedBuilder } from 'discord.js';
 import { useMainPlayer } from 'discord-player';
 
 export default
 {
-    data: new SlashCommandBuilder().setName("play").setDescription("plays a song").addStringOption(option =>
-    {
-        return option.setName("path").setDescription("name or url of the song").setRequired(true);
-    }),
-    execute: async ({interaction}) =>
+    data: new SlashCommandSubcommandBuilder()
+        .setName("play")
+        .setDescription("Toca uma música")
+        .addStringOption(option =>
+            option.setName("path")
+                .setDescription("Caminho da música")
+                .setRequired(true)
+                .setAutocomplete(true)
+        ),
+    execute: async ({ interaction }) =>
     {
         const player = useMainPlayer();
         const channel = interaction.member.voice.channel;
