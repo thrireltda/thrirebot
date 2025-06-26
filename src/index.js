@@ -80,7 +80,7 @@ client.on(Events.InteractionCreate, async interaction => {
             return cmd.execute({ interaction, client });
 
         if (interaction.isAutocomplete() && cmd.autocomplete)
-            return cmd.autocomplete(interaction);
+            return cmd.autocomplete({ interaction, client });
     } catch (error) {
         console.error(`❌ Erro ao executar comando '${baseName}':`, error);
         if (!interaction.replied && !interaction.deferred) {

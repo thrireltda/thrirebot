@@ -3,16 +3,29 @@ import { EmbedBuilder } from "discord.js";
 import { Octokit } from "@octokit/rest";
 import { readFile } from "fs/promises";
 import { decrypt } from "../../../utils/crypto.js";
+import { exec } from "child_process";
+import { promisify } from "util";
 
+const execAsync = promisify(exec);
 
 export default {
     data: new SlashCommandSubcommandBuilder()
         .setName("approve")
         .setDescription("Aprova uma pull request")
-        .addStringOption(option => option.setName('repo').setAutocomplete(true).setDescription('Repositório').setRequired(true))
-        .addStringOption(option => option.setName('pr').setAutocomplete(true).setDescription('Número da PR').setRequired(true)),
-    execute: async ({interaction}) =>
-    {
+        .addStringOption(option =>
+            option.setName("repo")
+                .setAutocomplete(true)
+                .setDescription("Repositório")
+                .setRequired(true)
+        )
+        .addStringOption(option =>
+            option.setName("pr")
+                .setAutocomplete(true)
+                .setDescription("Número da PR")
+                .setRequired(true)
+        ),
+
+    execute: async ({ interaction }) => {
         await interaction.deferReply({ ephemeral: true });
 
         const userId = interaction.user.id;
@@ -23,7 +36,9 @@ export default {
             const raw = await readFile("./github_credentials.json", "utf8");
             const credentials = JSON.parse(raw);
             if (!credentials[userId]) {
-                return interaction.editReply({ content: "❌ Token do GitHub não encontrado para este usuário." });
+                return interaction.editReply({
+                    content: "❌ Token do GitHub não encontrado para este usuário."
+                });
             }
 
             const token = decrypt(credentials[userId].token);
@@ -41,7 +56,22 @@ export default {
                 .setDescription(`PR \`#${prNumber}\` do repositório \`${repo}\` foi aprovada.`)
                 .setColor(0x2ecc71);
 
-            return interaction.editReply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
+
+            // ⏎ Verifica e muda para a branch "dev" se necessário
+            try {
+                const { stdout: currentBranch } = await execAsync("git rev-parse --abbrev-ref HEAD");
+                if (currentBranch.trim() !== "dev") {
+                    console.log(`📦 Branch atual: ${currentBranch.trim()} — trocando para dev...`);
+                    await execAsync("git checkout dev");
+                    await execAsync("git pull");
+                    console.log("✅ Bot voltou para a branch dev");
+                } else {
+                    console.log("ℹ️ Já estamos na branch dev. Nenhuma troca necessária.");
+                }
+            } catch (err) {
+                console.error("❌ Erro ao trocar para a branch dev:", err);
+            }
 
         } catch (error) {
             console.error("Erro ao aprovar PR:", error);
@@ -50,8 +80,8 @@ export default {
             });
         }
     },
-    autocomplete: async (interaction) =>
-    {
+
+    autocomplete: async ({ interaction }) => {
         const userId = interaction.user.id;
         const focused = interaction.options.getFocused(true);
         const focusedName = focused.name;
@@ -70,8 +100,7 @@ export default {
 
         const octokit = new Octokit({ auth: token });
 
-        try
-        {
+        try {
             if (focusedName === "repo") {
                 const response = await octokit.request("GET /orgs/{org}/repos", {
                     org: "thrireltda"
@@ -120,6 +149,6 @@ async function safelyRespond(interaction, choices) {
             await interaction.respond(choices);
         }
     } catch (e) {
-        // Silencioso por padrão
+        // Silencia erros silenciosos de autocomplete
     }
 }
