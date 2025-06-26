@@ -81,7 +81,8 @@ export default {
                 if (currentBranch.trim() !== "dev") {
                     console.log(`📦 Trocando de '${currentBranch.trim()}' para 'dev'...`);
                     await execAsync("git checkout dev");
-                    await execAsync(`git pull https://x-access-token:${token}@github.com/thrireltda/${repo}.git`);
+                    await execAsync(`git fetch https://x-access-token:${token}@github.com/thrireltda/${repo}.git dev`);
+                    await execAsync(`git reset --hard FETCH_HEAD`);
                 } else {
                     console.log("ℹ️ Já estamos na branch 'dev'.");
                 }
