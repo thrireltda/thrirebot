@@ -32,7 +32,6 @@ export default async function buildAllCommands() {
                 const [command, group, sub] = parts.map(p => p.replace('.js', ''));
 
                 if (parts.length === 1) {
-                    // Comando direto
                     allCommands.push({
                         data: module.data,
                         execute: module.execute,
@@ -40,7 +39,6 @@ export default async function buildAllCommands() {
                     });
 
                 } else if (parts.length === 2) {
-                    // Comando com grupo
                     let existing = allCommands.find(c => c.data.name === command);
                     if (!existing) {
                         existing = {
@@ -57,7 +55,6 @@ export default async function buildAllCommands() {
                     existing.executeMap.set(fileName, module);
 
                 } else if (parts.length === 3) {
-                    // Comando com grupo e subcomando
                     let existing = allCommands.find(c => c.data.name === command);
                     if (!existing) {
                         existing = {
@@ -91,10 +88,10 @@ export default async function buildAllCommands() {
 
     await processPath(commandsRoot);
 
-    // Adiciona os executores e autocompletes
     for (const cmd of allCommands) {
         const groupMap = cmd.groups || new Map();
         const executeMap = cmd.executeMap || new Map();
+        const originalExecute = cmd.execute;
 
         cmd.execute = async ({ interaction, client }) => {
             const group = interaction.options.getSubcommandGroup(false);
@@ -105,11 +102,13 @@ export default async function buildAllCommands() {
                 handler = groupMap.get(group)?.get(sub);
             } else if (executeMap.has(sub)) {
                 handler = executeMap.get(sub);
-            } else if (cmd.execute && typeof cmd.execute === 'function') {
-                return cmd.execute({ interaction, client });
+            } else if (typeof originalExecute === 'function') {
+                return originalExecute({ interaction, client });
             }
 
-            if (handler?.execute) return handler.execute({ interaction, client });
+            if (handler?.execute) {
+                return handler.execute({ interaction, client });
+            }
 
             return interaction.reply({
                 content: '❌ Comando não encontrado.',
@@ -117,20 +116,30 @@ export default async function buildAllCommands() {
             });
         };
 
-        cmd.autocomplete = async (interaction) => {
-            const group = interaction.options.getSubcommandGroup(false);
-            const sub = interaction.options.getSubcommand(false);
-            let handler;
+        // ✅ Só define cmd.autocomplete se algum handler realmente tiver autocomplete
+        const hasAutocomplete = (
+            [...groupMap.values()].some(map => [...map.values()].some(m => typeof m.autocomplete === 'function')) ||
+            [...executeMap.values()].some(m => typeof m.autocomplete === 'function') ||
+            typeof cmd.autocomplete === 'function'
+        );
 
-            if (group && groupMap.has(group)) {
-                handler = groupMap.get(group)?.get(sub);
-            } else if (executeMap.has(sub)) {
-                handler = executeMap.get(sub);
-            }
+        if (hasAutocomplete) {
+            cmd.autocomplete = async ({ interaction, client }) => {
+                const group = interaction.options.getSubcommandGroup(false);
+                const sub = interaction.options.getSubcommand(false);
+                let handler;
 
-            if (handler?.autocomplete)
-                return handler.autocomplete(interaction);
-        };
+                if (group && groupMap.has(group)) {
+                    handler = groupMap.get(group)?.get(sub);
+                } else if (executeMap.has(sub)) {
+                    handler = executeMap.get(sub);
+                }
+
+                if (handler?.autocomplete) {
+                    return handler.autocomplete({ interaction, client });
+                }
+            };
+        }
     }
 
     return allCommands;

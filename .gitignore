@@ -1,5 +1,7 @@
 .idea/
 
+github_credentials.json
+
 # Logs
 logs
 *.log

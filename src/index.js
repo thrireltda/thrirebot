@@ -1,3 +1,6 @@
+import { Player, useMainPlayer  } from 'discord-player';
+import { DefaultExtractors } from '@discord-player/extractor';
+import { YoutubeiExtractor } from 'discord-player-youtubei';
 import { Client, Events, REST, Routes } from 'discord.js';
 import dotenv from 'dotenv';
 import buildAllCommands from './utils/builder.js';
@@ -7,6 +10,14 @@ dotenv.config();
 const client = new Client({
     intents: ['Guilds', 'GuildMessages', 'MessageContent', 'GuildVoiceStates']
 });
+client.player = new Player(client,
+    {
+        ytdlOptions: {quality: "highestaudio", highWaterMark: 1 << 25},
+        leaveOnEnd: true,
+        leaveOnEndCooldown: 10000
+    });
+await useMainPlayer().extractors.loadMulti(DefaultExtractors);
+await useMainPlayer().extractors.register(YoutubeiExtractor, {});
 
 let commandList = [];
 
@@ -25,14 +36,21 @@ client.once('ready', async () => {
     try {
         // 🧹 Limpa comandos antigos
         await rest.put(
+            Routes.applicationCommands(process.env.CLIENT_ID),
+            { body: [] }
+        );
+
+        // 🧹 Limpa comandos antigos
+        await rest.put(
             Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
             { body: [] }
         );
+
         console.log('🧼 Comandos antigos removidos.');
 
         // ✅ Registra comandos novos
         await rest.put(
-            Routes.applicationCommands(process.env.CLIENT_ID),
+            Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
             { body: slashData }
         );
         console.log(`✅ ${slashData.length} comandos registrados com sucesso.`);
