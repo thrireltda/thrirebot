@@ -11,7 +11,7 @@ const execAsync = promisify(exec);
 export default {
     data: new SlashCommandSubcommandBuilder()
         .setName("approve")
-        .setDescription("Aprova uma pull request")
+        .setDescription("Aprova e mergeia uma pull request")
         .addStringOption(option =>
             option.setName("repo")
                 .setAutocomplete(true)
@@ -44,16 +44,15 @@ export default {
             const token = decrypt(credentials[userId].token);
             const octokit = new Octokit({ auth: token });
 
-            // 🔍 Buscar dados da PR para capturar o nome do branch
+            // 🔍 Obter branch da PR
             const { data: prData } = await octokit.pulls.get({
                 owner: "thrireltda",
                 repo,
                 pull_number: prNumber
             });
-
             const prBranch = prData.head.ref;
 
-            // ✅ Aprovar a PR
+            // ✅ Aprovar PR
             await octokit.pulls.createReview({
                 owner: "thrireltda",
                 repo,
@@ -61,38 +60,42 @@ export default {
                 event: "APPROVE"
             });
 
+            // 🔀 Mergear PR
+            await octokit.pulls.merge({
+                owner: "thrireltda",
+                repo,
+                pull_number: prNumber,
+                merge_method: "merge"
+            });
+
             const embed = new EmbedBuilder()
-                .setTitle("✅ Pull Request aprovada")
-                .setDescription(`PR \`#${prNumber}\` do repositório \`${repo}\` foi aprovada.`)
+                .setTitle("✅ Pull Request aprovada e mergeada")
+                .setDescription(`PR \`#${prNumber}\` do repositório \`${repo}\` foi aprovada e mergeada com sucesso.`)
                 .setColor(0x2ecc71);
 
             await interaction.editReply({ embeds: [embed] });
 
-            // 🔄 Trocar para a branch dev se necessário
+            // 🌿 Trocar para dev se necessário
             try {
                 const { stdout: currentBranch } = await execAsync("git rev-parse --abbrev-ref HEAD");
                 if (currentBranch.trim() !== "dev") {
-                    console.log(`📦 Branch atual: ${currentBranch.trim()} — trocando para dev...`);
+                    console.log(`📦 Trocando de '${currentBranch.trim()}' para 'dev'...`);
                     await execAsync("git checkout dev");
                     await execAsync(`git pull https://x-access-token:${token}@github.com/thrireltda/${repo}.git`);
-                    console.log("✅ Bot voltou para a branch dev");
                 } else {
-                    console.log("ℹ️ Já estamos na branch dev.");
+                    console.log("ℹ️ Já estamos na branch 'dev'.");
                 }
             } catch (err) {
-                console.error("❌ Erro ao trocar para a branch dev:", err);
+                console.error("❌ Erro ao trocar para dev:", err);
             }
 
-            // 🧹 Remover branch local da PR se existir
+            // 🧹 Deletar branch local da PR
             try {
                 const { stdout: localBranches } = await execAsync("git branch");
-                const localBranchList = localBranches
-                    .split("\n")
-                    .map(b => b.trim().replace("* ", ""));
-                if (localBranchList.includes(prBranch)) {
-                    console.log(`🗑️ Apagando branch local '${prBranch}'...`);
+                const branchList = localBranches.split("\n").map(b => b.trim().replace("* ", ""));
+                if (branchList.includes(prBranch)) {
+                    console.log(`🗑️ Deletando branch local '${prBranch}'...`);
                     await execAsync(`git branch -D ${prBranch}`);
-                    console.log(`✅ Branch '${prBranch}' removido localmente.`);
                 } else {
                     console.log(`ℹ️ Branch '${prBranch}' não existe localmente.`);
                 }
@@ -100,14 +103,14 @@ export default {
                 console.error("❌ Erro ao apagar o branch local:", err);
             }
 
-            // ♻️ Reiniciar o processo (systemd relança)
-            console.log("♻️ Encerrando processo para reinício via systemd...");
+            // ♻️ Reiniciar processo (systemd relança)
+            console.log("♻️ Encerrando processo...");
             process.exit(0);
 
         } catch (error) {
-            console.error("Erro ao aprovar PR:", error);
+            console.error("❌ Erro ao aprovar/mergear PR:", error);
             return interaction.editReply({
-                content: "❌ Não foi possível aprovar a PR. Verifique o número ou as permissões.",
+                content: "❌ Não foi possível aprovar ou mergear a PR. Verifique o número ou permissões.",
             });
         }
     },
@@ -180,6 +183,6 @@ async function safelyRespond(interaction, choices) {
             await interaction.respond(choices);
         }
     } catch (e) {
-        // Silencia erros de autocomplete
+        // Silenciar erros de resposta automática
     }
 }
