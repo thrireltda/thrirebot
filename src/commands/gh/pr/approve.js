@@ -44,6 +44,16 @@ export default {
             const token = decrypt(credentials[userId].token);
             const octokit = new Octokit({ auth: token });
 
+            // 🔍 Buscar dados da PR para capturar o nome do branch
+            const { data: prData } = await octokit.pulls.get({
+                owner: "thrireltda",
+                repo,
+                pull_number: prNumber
+            });
+
+            const prBranch = prData.head.ref;
+
+            // ✅ Aprovar a PR
             await octokit.pulls.createReview({
                 owner: "thrireltda",
                 repo,
@@ -58,20 +68,41 @@ export default {
 
             await interaction.editReply({ embeds: [embed] });
 
-            // ⏎ Verifica e muda para a branch "dev" se necessário
+            // 🔄 Trocar para a branch dev se necessário
             try {
                 const { stdout: currentBranch } = await execAsync("git rev-parse --abbrev-ref HEAD");
                 if (currentBranch.trim() !== "dev") {
                     console.log(`📦 Branch atual: ${currentBranch.trim()} — trocando para dev...`);
                     await execAsync("git checkout dev");
-                    await execAsync("git pull");
+                    await execAsync(`git pull https://x-access-token:${token}@github.com/thrireltda/${repo}.git`);
                     console.log("✅ Bot voltou para a branch dev");
                 } else {
-                    console.log("ℹ️ Já estamos na branch dev. Nenhuma troca necessária.");
+                    console.log("ℹ️ Já estamos na branch dev.");
                 }
             } catch (err) {
                 console.error("❌ Erro ao trocar para a branch dev:", err);
             }
+
+            // 🧹 Remover branch local da PR se existir
+            try {
+                const { stdout: localBranches } = await execAsync("git branch");
+                const localBranchList = localBranches
+                    .split("\n")
+                    .map(b => b.trim().replace("* ", ""));
+                if (localBranchList.includes(prBranch)) {
+                    console.log(`🗑️ Apagando branch local '${prBranch}'...`);
+                    await execAsync(`git branch -D ${prBranch}`);
+                    console.log(`✅ Branch '${prBranch}' removido localmente.`);
+                } else {
+                    console.log(`ℹ️ Branch '${prBranch}' não existe localmente.`);
+                }
+            } catch (err) {
+                console.error("❌ Erro ao apagar o branch local:", err);
+            }
+
+            // ♻️ Reiniciar o processo (systemd relança)
+            console.log("♻️ Encerrando processo para reinício via systemd...");
+            process.exit(0);
 
         } catch (error) {
             console.error("Erro ao aprovar PR:", error);
@@ -149,6 +180,6 @@ async function safelyRespond(interaction, choices) {
             await interaction.respond(choices);
         }
     } catch (e) {
-        // Silencia erros silenciosos de autocomplete
+        // Silencia erros de autocomplete
     }
 }
