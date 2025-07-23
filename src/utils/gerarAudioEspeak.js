@@ -1,7 +1,8 @@
 import fs from 'fs';
 import { spawn } from 'child_process';
 
-export default function gerarAudioEspeak(texto, outputPath, idioma = 'pt-br') {
+export default function gerarAudioEspeak(texto, outputPath, idioma = 'pt-br')
+{
     return new Promise((resolve, reject) => {
         const wavTemp = outputPath.replace('.mp3', '.wav');
         const espeak = spawn('espeak-ng', ['-v', idioma, '-s', '140', '-w', wavTemp]);

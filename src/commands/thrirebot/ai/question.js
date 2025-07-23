@@ -11,8 +11,8 @@ import {
 } from '@discordjs/voice';
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
 import { EmbedBuilder } from 'discord.js';
-import voiceTimeout from '../../utils/voiceTimeout.js';
-import gerarAudioEspeak from '../../utils/gerarAudioEspeak.js'; // agora aceita idioma
+import voiceTimeout from '../../../utils/voiceTimeout.js';
+import gerarAudioEspeak from '../../../utils/gerarAudioEspeak.js'; // agora aceita idioma
 
 const LANGUAGES = {
     'pt-br': 'português brasileiro',
@@ -29,7 +29,7 @@ const LANGUAGES = {
 
 export default {
     data: new SlashCommandSubcommandBuilder()
-        .setName('pergunta')
+        .setName('ask')
         .setDescription('Faça uma pergunta para o GPT4.')
         .addStringOption(option =>
             option.setName('pergunta')

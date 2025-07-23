@@ -1,6 +1,6 @@
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
 import { getVoiceConnection } from '@discordjs/voice';
-import voiceTimeout from '../../utils/voiceTimeout.js';
+import voiceTimeout from '../../../utils/voiceTimeout.js';
 
 export default
 {
