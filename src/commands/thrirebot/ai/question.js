@@ -29,7 +29,7 @@ const LANGUAGES = {
 
 export default {
     data: new SlashCommandSubcommandBuilder()
-        .setName('ask')
+        .setName('question')
         .setDescription('Faça uma pergunta para o GPT4.')
         .addStringOption(option =>
             option.setName('pergunta')

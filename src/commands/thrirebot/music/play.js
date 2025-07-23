@@ -1,6 +1,6 @@
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
 import { EmbedBuilder } from 'discord.js';
-import { useMainPlayer } from 'discord-player';
+import { QueryType, useMainPlayer } from 'discord-player';
 import fetch from 'node-fetch';
 
 export default {
@@ -15,77 +15,37 @@ export default {
 
     execute: async ({ interaction }) => {
         await interaction.deferReply();
+
         const player = useMainPlayer();
         const channel = interaction.member.voice.channel;
         const query = interaction.options.getString("path");
 
-        let lyrics = [];
-        let selectedTrack = null;
-        let usedFallback = false;
+        if (!channel) {
+            return interaction.followUp({ content: "Você precisa estar em um canal de voz.", ephemeral: true });
+        }
 
         try {
-            const searchResult = await player.search(query, { requestedBy: interaction.user });
-            if (!searchResult || !searchResult.tracks.length)
+            // 🔍 Spotify como engine primária
+            let searchResult = await player.search(query, {
+                requestedBy: interaction.user,
+                searchEngine: QueryType.YOUTUBE_SEARCH
+            });
+
+            if (!searchResult || !searchResult.tracks.length) {
                 return interaction.followUp({ content: 'Música não encontrada.', ephemeral: true });
-
-            selectedTrack = searchResult.tracks[0];
-
-            const cleanedTitle = selectedTrack.title.replace(/\([^)]*\)|\[[^\]]*\]|- .*|feat\..*/gi, '').trim();
-            const cleanedAuthor = selectedTrack.author.replace(/\([^)]*\)|\[[^\]]*\]/gi, '').trim();
-
-            // 🎯 Tentativa 1: LRCLib (sincronizada)
-            const resLrc = await fetch(`https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanedTitle)}&artist_name=${encodeURIComponent(cleanedAuthor)}`);
-            const dataLrc = await resLrc.json();
-
-            if (dataLrc?.syncedLyrics) {
-                lyrics = dataLrc.syncedLyrics.split('\n').map(line => {
-                    const [time, text] = line.split(']');
-                    return {
-                        time: time.replace('[', '').trim(),
-                        seconds: convertTimeToSeconds(time),
-                        text: text?.trim() || ''
-                    };
-                });
             }
 
-            // 🎯 Tentativa 2: Vagalume (fallback não sincronizado)
-            if (!lyrics.length) {
-                const fallbackUrl = `https://api.vagalume.com.br/search.artmus?q=${encodeURIComponent(cleanedAuthor + ' ' + cleanedTitle)}&limit=1`;
-                const fallbackRes = await fetch(fallbackUrl);
-                const fallbackData = await fallbackRes.json();
+            const selectedTrack = searchResult.tracks[0];
 
-                if (fallbackData.response?.docs?.[0]?.url) {
-                    const slug = fallbackData.response.docs[0].url.replace('/', '').replace('.html', '');
-                    const lyricRes = await fetch(`https://api.vagalume.com.br${fallbackData.response.docs[0].url}.json`);
-                    const lyricData = await lyricRes.json();
-
-                    if (lyricData?.mus?.[0]?.text) {
-                        lyrics = lyricData.mus[0].text
-                            .split('\n')
-                            .map((line, i) => ({
-                                time: '',
-                                seconds: i * 3, // aproximação grosseira
-                                text: line.trim()
-                            }));
-                        usedFallback = true;
-                    }
-                }
-            }
-
-            // 🎵 Embed inicial
-            const preview = lyrics.length
-                ? lyrics.slice(0, 8).map((line, i) => line.text ? (i === 0 ? `**${line.text}**` : line.text) : '').join('\n')
-                : 'Letra não encontrada.';
-
-            const embed = new EmbedBuilder()
-                .setTitle("🎶 Tocando agora")
-                .setDescription(`**[${selectedTrack.title}](${selectedTrack.url})**\n\n${preview}`)
+            // 🎵 Embed de "Música adicionada à fila"
+            const addedEmbed = new EmbedBuilder()
+                .setTitle("Música adicionada à fila")
+                .setDescription(`**[${selectedTrack.title}](${selectedTrack.url})**`)
                 .setThumbnail(selectedTrack.thumbnail)
                 .setFooter({ text: `Solicitada por ${interaction.user.username}` });
 
-            const reply = await interaction.followUp({ embeds: [embed] });
+            await interaction.followUp({ embeds: [addedEmbed] });
 
-            // 🎧 Toca a música depois que a letra estiver carregada
             const { track, queue } = await player.play(channel, selectedTrack.url, {
                 nodeOptions: {
                     metadata: { interaction, requestedBy: interaction.user },
@@ -95,6 +55,35 @@ export default {
                 }
             });
 
+            // Espera até a faixa começar a tocar
+            const waitUntilPlaying = async () => {
+                return new Promise(resolve => {
+                    const check = () => {
+                        if (queue.currentTrack?.url === track.url) {
+                            resolve();
+                        } else {
+                            setTimeout(check, 500);
+                        }
+                    };
+                    check();
+                });
+            };
+
+            await waitUntilPlaying();
+
+            // 🎤 Busca letra
+            const lyrics = await fetchLyrics(track.title, track.author);
+
+            // 🎶 Embed "Tocando agora"
+            const embed = new EmbedBuilder()
+                .setTitle("Tocando agora")
+                .setDescription(`**[${track.title}](${track.url})**\n\n${lyrics.length ? lyrics.slice(0, 8).map(l => l.text).join('\n') : 'Letra não encontrada.'}`)
+                .setThumbnail(track.thumbnail)
+                .setFooter({ text: `Solicitada por ${interaction.user.username}` });
+
+            const embedMessage = await interaction.channel.send({ embeds: [embed] });
+
+            // 🕒 Letra sincronizada
             if (lyrics.length > 0) {
                 const startTime = Date.now();
                 let windowStart = 0;
@@ -126,16 +115,16 @@ export default {
                         const visible = lyrics.slice(windowStart, windowStart + maxLines);
                         const embedText = visible.map((line, i) => {
                             const actualIndex = windowStart + i;
-                            if (!line.text) return ''; // evita "**"
+                            if (!line.text) return '';
                             return boldIndexes.has(actualIndex) ? `**${line.text}**` : line.text;
                         }).join('\n');
 
                         embed.setDescription(`**[${track.title}](${track.url})**\n\n${embedText}`);
-                        await reply.edit({ embeds: [embed] });
+                        await embedMessage.edit({ embeds: [embed] });
                     }
 
-                    if (queue.currentTrack) {
-                        setTimeout(loop, 500);
+                    if (queue.currentTrack && queue.currentTrack.url === track.url) {
+                        setTimeout(loop, 750);
                     }
                 };
 
@@ -152,4 +141,47 @@ export default {
 function convertTimeToSeconds(str) {
     const [min, sec] = str.replace('[', '').split(':');
     return parseFloat(min) * 60 + parseFloat(sec);
+}
+
+function safeEncode(str) {
+    return encodeURIComponent(str)
+        .replace(/\(/g, '%28')
+        .replace(/\)/g, '%29')
+        .replace(/!/g, '%21')
+        .replace(/'/g, '%27')
+        .replace(/\*/g, '%2A')
+        .replace(/~/g, '%7E');
+}
+
+function fixAuthorName(name) {
+    return /^(?:[A-Z] ?)+$/.test(name.trim())
+        ? name.replace(/\s+/g, '')
+        : name;
+}
+
+async function fetchLyrics(title, author) {
+    try {
+        const trackName = safeEncode(String(title));
+        const artistName = safeEncode(fixAuthorName(String(author).trim()));
+        const lrcUrl = `https://lrclib.net/api/get?track_name=${trackName}&artist_name=${artistName}`;
+        console.log("[DEBUG] URL codificada:", lrcUrl);
+
+        const resLrc = await fetch(lrcUrl);
+        const dataLrc = await resLrc.json();
+
+        if (!dataLrc?.syncedLyrics) return [];
+
+        return dataLrc.syncedLyrics.split('\n').map(line => {
+            const [time, text] = line.split(']');
+            return {
+                time: time.replace('[', '').trim(),
+                seconds: convertTimeToSeconds(time),
+                text: text?.trim() || ''
+            };
+        });
+
+    } catch (err) {
+        console.error("[DEBUG] Falha ao buscar letra:", err);
+        return [];
+    }
 }
