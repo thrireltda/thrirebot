@@ -1,5 +1,6 @@
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
 import { EmbedBuilder } from 'discord.js';
+import { getVoiceConnection } from '@discordjs/voice';
 import { QueryType, useMainPlayer } from 'discord-player';
 import fetch from 'node-fetch';
 
@@ -24,9 +25,12 @@ export default {
             return interaction.followUp({ content: "Você precisa estar em um canal de voz.", ephemeral: true });
         }
 
+        // 🎧 Desconecta qualquer conexão existente (ex: rádio)
+        const existingConnection = getVoiceConnection(interaction.guild.id);
+        if (existingConnection) existingConnection.destroy();
+
         try {
-            // 🔍 Spotify como engine primária
-            let searchResult = await player.search(query, {
+            const searchResult = await player.search(query, {
                 requestedBy: interaction.user,
                 searchEngine: QueryType.YOUTUBE_SEARCH
             });
@@ -55,7 +59,7 @@ export default {
                 }
             });
 
-            // Espera até a faixa começar a tocar
+            // Espera a música começar
             const waitUntilPlaying = async () => {
                 return new Promise(resolve => {
                     const check = () => {
@@ -71,7 +75,7 @@ export default {
 
             await waitUntilPlaying();
 
-            // 🎤 Busca letra
+            // 🔍 Busca letra sincronizada
             const lyrics = await fetchLyrics(track.title, track.author);
 
             // 🎶 Embed "Tocando agora"
@@ -83,7 +87,7 @@ export default {
 
             const embedMessage = await interaction.channel.send({ embeds: [embed] });
 
-            // 🕒 Letra sincronizada
+            // ⏱️ Letra sincronizada
             if (lyrics.length > 0) {
                 const startTime = Date.now();
                 let windowStart = 0;
@@ -138,6 +142,7 @@ export default {
     }
 };
 
+// Funções auxiliares
 function convertTimeToSeconds(str) {
     const [min, sec] = str.replace('[', '').split(':');
     return parseFloat(min) * 60 + parseFloat(sec);

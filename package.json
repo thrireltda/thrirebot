@@ -1,14 +1,14 @@
 {
   "name": "thrirebot",
-  "version": "1.0.0",
-  "description": "A discord bot for thrire, inc.",
+  "version": "0.0.1",
+  "description": "Bot de discord oficial da Thrire LTDA.",
   "keywords": [
     "thrire",
     "bot",
     "thrirebot",
     "discord"
   ],
-  "homepage": "https://github.com/thrireinc/thrirebot#readme",
+  "homepage": "https://thrire.com",
   "bugs": {
     "url": "https://github.com/thrireinc/thrirebot/issues"
   },
@@ -17,7 +17,7 @@
     "url": "git+https://github.com/thrireinc/thrirebot.git"
   },
   "license": "ISC",
-  "author": "thrire, inc.",
+  "author": "Thrire LTDA",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
@@ -26,16 +26,15 @@
   "dependencies": {
     "@discord-player/extractor": "^7.1.0",
     "@discordjs/builders": "^1.10.1",
+    "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.18.0",
     "@octokit/rest": "^22.0.0",
     "discord-player": "^7.1.0",
-    "discord-player-soundcloud": "^1.0.7",
-    "discord-player-spotify": "^1.1.7",
     "discord-player-youtubei": "^1.4.5",
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",
-    "gpt4js": "^1.7.8",
+    "franc-min": "^6.2.0",
     "node-cron": "^4.1.0",
-    "node-fetch": "^3.3.2"
+    "process": "^0.11.10"
   }
 }
