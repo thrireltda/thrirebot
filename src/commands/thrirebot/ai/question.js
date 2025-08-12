@@ -28,9 +28,9 @@ export default
         const embed = new EmbedBuilder();
         await interaction.deferReply();
         {
+            const channel = interaction.member.voice.channel;
             const prompt = interaction.options.getString('pergunta');
             const usarWeb = interaction.options.getString('usarweb') === 'true';
-            const channel = interaction.member.voice.channel;
             let resposta = '';
             let fontes = [];
 

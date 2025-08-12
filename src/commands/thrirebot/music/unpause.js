@@ -9,10 +9,7 @@ export default
     {
         const queue = await client.player.queues.get(interaction.guild.id);
         if (!queue) return;
-
-        if (queue.node.isPaused())
-            queue.node.resume();
-
+        if (queue.node.isPaused()) queue.node.resume();
         await interaction.deferReply();
         await interaction.deleteReply();
     }

@@ -1,7 +1,8 @@
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
-import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
+import { getVoiceConnection } from "@discordjs/voice";
 import process from "process";
 import safelyRespond from "../../../utils/safelyRespond.js";
+import discordjsvoice_export from "../../../../lib/discordjs-voice/index.js";
 
 export default
 {
@@ -20,114 +21,128 @@ export default
                 .setAutocomplete(true)
                 .setRequired(true)
         ),
-    execute: async ({ client, interaction }) => {
-        await interaction.deferReply();
-
-        const stationUuid = interaction.options.getString("frequencia");
-        const channel = interaction.member.voice.channel;
-
-        if (!channel) {
-            return interaction.editReply("Você precisa estar em um canal de voz para usar este comando.");
-        }
-
-        // Parar música anterior
-        const queue = client.player.queues.get(interaction.guild.id);
-        if (queue) {
-            queue.clear();
-            queue.node.stop();
-        }
-
+    execute: async ({ client, interaction }) =>
+    {
         let station = null;
-        try {
-            const stations = (await fetch(`${process.env.RADIO_ENDPOINT}/stations/byuuid/${stationUuid}`)).json();
-
-            if (stations.length > 0 && stations[0].url_resolved) {
-                station = stations[0];
-                console.log(`[RADIO] Estação encontrada: ${station.name} - ${station.url_resolved}`);
+        await interaction.deferReply();
+        {
+            const channel = interaction.member.voice.channel;
+            if (!channel) return interaction.editReply("Você precisa estar em um canal de voz para usar este comando.");
+            const existingConnection = getVoiceConnection(interaction.guild.id);
+            if (existingConnection) existingConnection.destroy();
+            const stationUuid = interaction.options.getString("frequencia");
+            const queue = client.player.queues.get(interaction.guild.id);
+            if (queue)
+            {
+                queue.clear();
+                queue.node.stop();
             }
-        } catch (err) {
-            console.error("[RADIO] Erro ao buscar estação:", err);
+            try
+            {
+                await fetch(`${process.env.RADIO_ENDPOINT}/stations/byuuid/${stationUuid}`)
+                .then(response =>
+                {
+                    switch (response.ok)
+                    {
+                        case true:
+                            return response.json();
+                        case false:
+                            throw new Error("Network response was not ok.");
+                    }
+                })
+                .then(data =>
+                {
+                    if (data.length <= 0 || !data[0].url_resolved) return;
+                    station = data[0];
+                })
+            }
+            catch (e)
+            {
+                throw new Error(`Erro ao buscar estação: ${e}`);
+            }
+            await discordjsvoice_export(channel, station.url_resolved)
         }
-
-        if (!station) {
-            return interaction.editReply(`⚠️ Não foi possível sintonizar a estação selecionada.`);
-        }
-
-        const connection = joinVoiceChannel({
-            channelId: channel.id,
-            guildId: channel.guild.id,
-            adapterCreator: channel.guild.voiceAdapterCreator
-        });
-
-        const player = createAudioPlayer();
-        const resource = createAudioResource(station.url_resolved, { inlineVolume: true });
-
-        connection.subscribe(player);
-        player.play(resource);
-
-        player.on(AudioPlayerStatus.Playing, async () => {
-            await interaction.editReply(`📻 Sintonizando **${station.name}** (${station.countrycode})...`);
-        });
-
-        player.on("error", error => {
-            console.error("[RADIO] Erro no player:", error);
-        });
+        await interaction.editReply(`📻 Sintonizando **${station.name}** (${station.countrycode})...`);
     },
     autocomplete: async ({ interaction }) =>
     {
         const focused = interaction.options.getFocused(true);
         const query = focused.value.toLowerCase();
 
-        try {
-            if (focused.name === "pais") {
-                const countries = (await fetch(`${process.env.RADIO_ENDPOINT}/countries`)).json();
+        try
+        {
+            switch (focused.name)
+            {
+                case "pais":
+                    await fetch(`${process.env.RADIO_ENDPOINT}/countries`)
+                    .then(response =>
+                    {
+                        switch (response.ok)
+                        {
+                            case true:
+                                return response.json();
+                            case false:
+                                throw new Error("Network response was not ok.");
+                        }
+                    })
+                    .then(data =>
+                    {
+                        const filtered = data
+                        .filter(c => c.name.toLowerCase().includes(query))
+                        .slice(0, 25)
+                        .map(c => ({
+                                    name: `${c.name} (${c.iso_3166_1})`,
+                                    value: c.iso_3166_1
+                                }));
+                        return safelyRespond(interaction, filtered);
+                    })
+                    break;
+                case "frequencia":
+                    const countryCode = interaction.options.getString("pais");
+                    if (!countryCode) return safelyRespond(interaction, []);
+                    await fetch(`${process.env.RADIO_ENDPOINT}/stations/bycountrycodeexact/${encodeURIComponent(countryCode)}?hidebroken=true&order=votes&reverse=true`)
+                    .then(response =>
+                    {
+                        switch (response.ok)
+                        {
+                            case true:
+                                return response.json();
+                           case false:
+                               throw new Error("Network response was not ok.");
+                        }
+                    })
+                    .then(data =>
+                    {
+                        const vistos = new Set();
+                        const lista = [];
+                        for (const s of data)
+                        {
+                            const match = s.name.match(/(\d{2,3}(\.\d{1,2})?)/);
+                            if (!match) continue;
 
-                const filtered = countries
-                    .filter(c => c.name.toLowerCase().includes(query))
-                    .slice(0, 25)
-                    .map(c => ({
-                        name: `${c.name} (${c.iso_3166_1})`,
-                        value: c.iso_3166_1
-                    }));
-                return safelyRespond(interaction, filtered);
+                            const freq = match[0];
+                            if (query && !freq.startsWith(query)) continue;
+
+                            const chave = `${freq}-${s.name}`;
+                            if (vistos.has(chave)) continue;
+                            vistos.add(chave);
+
+                            lista.push({
+                                    name: `[${freq}] ${s.name}`,
+                                    value: s.stationuuid
+                                });
+
+                            if (lista.length >= 25) break;
+                        }
+                        return safelyRespond(interaction, lista);
+                    })
+                    break;
             }
-
-            if (focused.name === "frequencia") {
-                const countryCode = interaction.options.getString("pais");
-                if (!countryCode) return safelyRespond(interaction, []);
-
-                const stations = (await fetch(`${process.env.RADIO_ENDPOINT}/stations/bycountrycodeexact/${encodeURIComponent(countryCode)}?hidebroken=true&order=votes&reverse=true`)).json();
-
-
-                const vistos = new Set();
-                const lista = [];
-
-                for (const s of stations) {
-                    const match = s.name.match(/(\d{2,3}(\.\d{1,2})?)/);
-                    if (!match) continue;
-
-                    const freq = match[0];
-                    if (query && !freq.startsWith(query)) continue;
-
-                    const chave = `${freq}-${s.name}`;
-                    if (vistos.has(chave)) continue;
-                    vistos.add(chave);
-
-                    lista.push({
-                        name: `[${freq}] ${s.name}`,
-                        value: s.stationuuid
-                    });
-
-                    if (lista.length >= 25) break;
-                }
-
-                return safelyRespond(interaction, lista);
-            }
-
             return safelyRespond(interaction, []);
-        } catch (err) {
-            console.error("[RADIO] Erro no autocomplete:", err);
-            return safelyRespond(interaction, []);
+        }
+        catch (e)
+        {
+            throw new Error(`Erro no autocomplete: ${e}}`);
         }
     }
 };

@@ -10,18 +10,12 @@ export default
     execute: async ({ client, interaction }) =>
     {
         const queue = client.player.queues.get(interaction.guild.id);
-
-        if (!queue || !queue.isPlaying())
-            return interaction.reply({ content: '❌ Nenhuma música está tocando.', ephemeral: true });
-
+        if (!queue || !queue.isPlaying()) return interaction.reply({ content: '❌ Nenhuma música está tocando.', ephemeral: true });
         queue.clear();
         queue.node.stop();
-
         await interaction.deferReply({ ephemeral: true });
         await interaction.deleteReply();
-
         const connection = getVoiceConnection(interaction.guild.id);
-        if (connection)
-            voiceTimeout(interaction.guild.id, connection);
+        if (connection) voiceTimeout(interaction.guild.id, connection);
     }
 };
