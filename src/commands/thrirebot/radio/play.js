@@ -2,7 +2,7 @@ import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
 import { getVoiceConnection } from "@discordjs/voice";
 import process from "process";
 import safelyRespond from "../../../utils/safelyRespond.js";
-import discordjsvoice_export from "../../../../lib/discordjs-voice/index.js";
+import DiscordJSVoiceLib from "../../../../lib/discordjs-voice/index.js";
 
 export default
 {
@@ -60,7 +60,7 @@ export default
             {
                 throw new Error(`Erro ao buscar estação: ${e}`);
             }
-            await discordjsvoice_export(channel, station.url_resolved)
+            await DiscordJSVoiceLib.play(channel, station.url_resolved)
         }
         await interaction.editReply(`📻 Sintonizando **${station.name}** (${station.countrycode})...`);
     },

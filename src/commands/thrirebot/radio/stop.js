@@ -1,34 +1,17 @@
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
-import { getVoiceConnection } from "@discordjs/voice";
+import DiscordJSVoiceLib from "../../../../lib/discordjs-voice/index.js";
 
 export default
 {
     data: new SlashCommandSubcommandBuilder()
         .setName("stop")
         .setDescription("Para a rádio e desconecta do canal de voz."),
-    execute: async ({ interaction }) =>
+    execute: async ({ client, interaction }) =>
     {
-        try
+        await interaction.deferReply({ ephemeral: true })
         {
-            const connection = getVoiceConnection(interaction.guild.id);
-            if (!connection) return interaction.reply({content: "❌ Nenhuma rádio está tocando.", flags: 64});
-            try
-            {
-                connection.destroy();
-            }
-            catch (e)
-            {
-                throw new Error(`Conexão já encerrada ou inválida: ${e}`)
-            }
-            await interaction.reply({ content: "🛑 Rádio parada.", flags: 64 });
-            setTimeout(() =>
-            {
-                interaction.deleteReply().catch(() => {});
-            }, 1500);
+            await DiscordJSVoiceLib.stop(client);
         }
-        catch (e)
-        {
-            throw new Error(`Erro inesperado: ${e}`)
-        }
+        await interaction.deleteReply();
     }
 };

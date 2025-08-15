@@ -5,7 +5,6 @@ import fs from 'fs';
 import process from 'process';
 import { Client, GatewayIntentBits } from 'discord.js';
 import getFFmpegPath from './utils/getFFmpegPath.js';
-import discordplayer_export  from '../lib/discord-player/index.js';
 
 dotenv.config();
 
@@ -22,9 +21,6 @@ const client = new Client({
         GatewayIntentBits.GuildVoiceStates
     ]
 });
-
-// Configura o player (discord-player + extractors)
-await discordplayer_export(client);
 
 // Carrega eventos dinamicamente
 const eventsPath = path.resolve('./src/events');

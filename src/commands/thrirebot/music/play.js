@@ -1,8 +1,19 @@
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
+import { spawn } from 'child_process';
 import { EmbedBuilder } from 'discord.js';
-import { getVoiceConnection } from '@discordjs/voice';
-import { QueryType, useMainPlayer } from 'discord-player';
-import safelyEncode from "../../../utils/safelyEncode.js";
+import { createAudioPlayer, createAudioResource, NoSubscriberBehavior } from '@discordjs/voice';
+import { fileURLToPath } from 'url';
+import { voiceConnection } from '../../../events/voiceStateUpdate.js';
+import ytSearch from 'yt-search';
+import path from 'path';
+import DiscordJSVoiceLib from "../../../../lib/discordjs-voice/index.js";
+import espeakng_export from "../../../../lib/espeakng/index.js";
+import os from "os";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ytdlpPath = path.join(__dirname, '../../../../bin/yt-dlp/win32-x64/yt-dlp.exe');
 
 export default
 {
@@ -10,142 +21,87 @@ export default
         .setName("play")
         .setDescription("Toca uma música")
         .addStringOption(option =>
-            option.setName("path")
-                .setDescription("Caminho da música (link ou nome)")
+            option.setName("query")
+                .setDescription("Nome ou link da música")
                 .setRequired(true)
         ),
-    execute: async ({ interaction }) =>
+    execute: async ({ interaction, client }) =>
     {
         await interaction.deferReply();
-        {
-            const channel = interaction.member.voice.channel;
-            if (!channel) return interaction.followUp({ content: "Você precisa estar em um canal de voz.", ephemeral: true });
-            const existingConnection = getVoiceConnection(interaction.guild.id);
-            if (existingConnection) existingConnection.destroy();
+        if (!voiceConnection) return interaction.followUp({content: "O bot não está conectado a nenhum canal de voz.", ephemeral: true});
 
-            try
+        // Garantir inicializações necessárias
+        if (!client.musicQueue) client.musicQueue = [];
+        if (!client.audioPlayer) {
+            client.audioPlayer = createAudioPlayer({
+                behaviors: { noSubscriber: NoSubscriberBehavior.Play }
+            });
+            client.audioPlayer.on('idle', async () =>
             {
-                const player = useMainPlayer();
-                const query = interaction.options.getString("path");
-                const searchResult = await player.search(query,
+                if (client.musicQueue.length > 0)
                 {
-                    requestedBy: interaction.user,
-                    searchEngine: QueryType.YOUTUBE_SEARCH
-                });
-                if (!searchResult || !searchResult.tracks.length) return interaction.followUp({ content: 'Música não encontrada.', ephemeral: true });
-                const selectedTrack = searchResult.tracks[0];
+                    await playNext(client);
+                }
+                else
+                {
+                    await DiscordJSVoiceLib.stop(client)
+                }
+            });
+        }
+        if (!client.isPlaying) client.isPlaying = false;
 
-                const addedEmbed = new EmbedBuilder()
-                .setTitle("Música adicionada à fila")
+        try {
+            const query = interaction.options.getString("query");
+            const searchResult = await ytSearch(query);
+            if (!searchResult.videos.length) {
+                return interaction.followUp({
+                    content: 'Música não encontrada.',
+                    ephemeral: true
+                });
+            }
+
+            const selectedTrack = searchResult.videos[0];
+            client.musicQueue.push(selectedTrack);
+
+            const addedEmbed = new EmbedBuilder()
+                .setTitle("🎵 Música adicionada à fila")
                 .setDescription(`**[${selectedTrack.title}](${selectedTrack.url})**`)
                 .setThumbnail(selectedTrack.thumbnail)
                 .setFooter({ text: `Solicitada por ${interaction.user.username}` });
-                await interaction.followUp({ embeds: [addedEmbed] });
 
-                const { track, queue } = await player.play(channel, selectedTrack.url, {
-                    nodeOptions: {
-                        metadata: { interaction, requestedBy: interaction.user },
-                        leaveOnEnd: false,
-                        leaveOnEmpty: true,
-                        leaveOnEmptyCooldown: 5 * 60_000,
-                    }
-                });
-                const waitUntilPlaying = async () =>
-                {
-                    return new Promise(resolve =>
-                    {
-                        const check = () =>
-                        {
-                            if (queue.currentTrack?.url === track.url)
-                                resolve();
-                            else
-                                setTimeout(check, 500);
-                        };
-                        check();
-                    });
-                };
-                await waitUntilPlaying();
-                const lyrics = await fetchLyrics(track.title, track.author);
+            await interaction.followUp({ embeds: [addedEmbed] });
 
-                const embed = new EmbedBuilder()
-                .setTitle("Tocando agora")
-                .setDescription(`**[${track.title}](${track.url})**\n\n${lyrics.length ? lyrics.slice(0, 8).map(l => l.text).join('\n') : 'Letra não encontrada.'}`)
-                .setThumbnail(track.thumbnail)
-                .setFooter({ text: `Solicitada por ${interaction.user.username}` });
-                const embedMessage = await interaction.channel.send({ embeds: [embed] });
-
-                if (lyrics.length > 0)
-                {
-                    const startTime = Date.now();
-                    let windowStart = 0;
-                    const maxLines = 8;
-                    const boldIndexes = new Set();
-                    let fixedWindow = false;
-                    const loop = async () =>
-                    {
-                        const secondsNow = (Date.now() - startTime) / 1000;
-                        const currentIndex = lyrics.findIndex((line, i) => {
-                            const next = lyrics[i + 1];
-                            return secondsNow >= line.seconds && (!next || secondsNow < next.seconds);
-                        });
-                        if (currentIndex !== -1)
-                        {
-                            boldIndexes.add(currentIndex);
-                            const nextLineIndex = windowStart + maxLines;
-                            const hasLineToAdd = lyrics[nextLineIndex] !== undefined;
-                            if (!fixedWindow && hasLineToAdd && currentIndex >= windowStart + 1) windowStart++;
-                            if (!hasLineToAdd && !fixedWindow) fixedWindow = true;
-                            const visible = lyrics.slice(windowStart, windowStart + maxLines);
-                            const embedText = visible.map((line, i) =>
-                            {
-                                const actualIndex = windowStart + i;
-                                if (!line.text) return '';
-                                return boldIndexes.has(actualIndex) ? `**${line.text}**` : line.text;
-                            }).join('\n');
-                            embed.setDescription(`**[${track.title}](${track.url})**\n\n${embedText}`);
-                            await embedMessage.edit({ embeds: [embed] });
-                        }
-                        if (queue.currentTrack && queue.currentTrack.url === track.url) setTimeout(loop, 750);
-                    };
-                    loop();
-                }
-            }
-            catch (e)
+            if (!client.isPlaying)
             {
-                throw new Error(`Falha ao tocar a música ou buscar letra: ${e}`)
+                client.isPlaying = true;
+                await playNext(client);
             }
+
+        } catch (e) {
+            console.error(e);
+            throw new Error(`Falha ao tocar a música: ${e.message}`);
         }
     }
 };
 
-function convertTimeToSeconds(str)
+async function playNext(client)
 {
-    const [min, sec] = str.replace('[', '').split(':');
-    return parseFloat(min) * 60 + parseFloat(sec);
-}
-function fixAuthorName(name)
-{
-    return /^(?:[A-Z] ?)+$/.test(name.trim()) ? name.replace(/\s+/g, '') : name;
-}
-async function fetchLyrics(title, author)
-{
-    try
+    if (client.musicQueue.length === 0)
     {
-        const trackName = safelyEncode(String(title));
-        const artistName = safelyEncode(fixAuthorName(String(author).trim()));
-        const lrcUrl = `https://lrclib.net/api/get?track_name=${trackName}&artist_name=${artistName}`;
-        const resLrc = await fetch(lrcUrl);
-        const dataLrc = await resLrc.json();
-        if (!dataLrc?.syncedLyrics) return [];
-        return dataLrc.syncedLyrics.split('\n').map(line =>
-        {
-            const [time, text] = line.split(']');
-            return {time: time.replace('[', '').trim(), seconds: convertTimeToSeconds(time), text: text?.trim() || ''};
-        });
+        client.isPlaying = false;
+        return;
+    }
 
-    }
-    catch (e)
-    {
-        return [];
-    }
+    const track = client.musicQueue.shift();
+    const ytdlpProcess = await spawn(ytdlpPath, [
+        '-f', 'bestaudio[ext=webm]/bestaudio',
+        '-o', '-',
+        '--quiet',
+        '--no-warnings',
+        track.url
+    ], { stdio: ['ignore', 'pipe', 'inherit'] });
+
+    const tempDir = path.resolve(os.tmpdir(), 'thrirebot');
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+    await DiscordJSVoiceLib.play(client, ytdlpProcess.stdout, null);
 }

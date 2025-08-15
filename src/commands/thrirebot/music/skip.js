@@ -1,6 +1,5 @@
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import { getVoiceConnection } from '@discordjs/voice';
-import voiceTimeout from '../../../utils/voiceTimeout.js';
+import DiscordJSVoiceLib from "../../../../lib/discordjs-voice/index.js";
 
 export default
 {
@@ -9,13 +8,11 @@ export default
         .setDescription("Pula para a próxima música da fila."),
     execute: async ({ client, interaction }) =>
     {
-        const queue = client.player.queues.get(interaction.guild.id);
-        if (!queue || !queue.isPlaying()) return interaction.reply({ content: '❌ Nenhuma música está tocando.', ephemeral: true });
-        queue.node.skip();
         await interaction.deferReply({ ephemeral: true });
+        {
+            if (!client.audioPlayer || !client.isPlaying) return interaction.editReply({ content: '❌ Nenhuma música está tocando.' });
+            await DiscordJSVoiceLib.stop(client);
+        }
         await interaction.deleteReply();
-        if (queue.currentTrack) return;
-        const connection = getVoiceConnection(interaction.guild.id);
-        if (connection) voiceTimeout(interaction.guild.id, connection);
     }
 };

@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const commandsRoot = path.resolve(__dirname, '../commands');
 
-export default async function buildAllCommands()
+export default async function()
 {
     const thrirebotCommand =
     {

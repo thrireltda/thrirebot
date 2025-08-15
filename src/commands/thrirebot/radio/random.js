@@ -1,7 +1,7 @@
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
 import process from "process";
 import safelyRespond from "../../../utils/safelyRespond.js";
-import discordjsvoice_export from "../../../../lib/discordjs-voice/index.js";
+import DiscordJSVoiceLib from "../../../../lib/discordjs-voice/index.js";
 
 export default
 {
@@ -31,9 +31,8 @@ export default
                     })
                 .then(data =>
                 {
-                        country = data[Math.floor(Math.random() * data.length)];
-                    })
-
+                    country = data[Math.floor(Math.random() * data.length)];
+                })
                 await fetch(`${process.env.RADIO_ENDPOINT}/stations/bycountrycodeexact/${country.iso_3166_1}?hidebroken=true`)
                 .then(response =>
                 {
@@ -50,7 +49,7 @@ export default
                     station = data[Math.floor(Math.random() * data.length)];
                 })
 
-                await discordjsvoice_export(channel, station.url_resolved)
+                await DiscordJSVoiceLib.play(channel, station.url_resolved)
             }
             catch (err)
             {
