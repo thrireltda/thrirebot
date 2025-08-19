@@ -9,7 +9,7 @@ export default class DiscordJSVoiceLib
     static async play(client, source)
     {
         const resource = await createAudioResource(source, { inputType: StreamType.Arbitrary });
-        await client.audioPlayer.play(resource);
+        await client.audioPlayer?.play(resource);
     }
     static async stop(client)
     {

@@ -1,5 +1,5 @@
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import DiscordJSVoiceLib from "../../../../lib/discordjs-voice/index.js";
+import DiscordJSVoiceLib from "../../../facades/discordJSVoice.js";
 
 export default
 {

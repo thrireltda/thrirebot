@@ -1,4 +1,4 @@
-// src/index.js
+// src/discordJSVoice.js
 import { Client, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 import path from 'path';

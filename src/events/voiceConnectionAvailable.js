@@ -2,12 +2,8 @@ import { Worker } from "worker_threads";
 import { AudioPlayerStatus, entersState } from "@discordjs/voice";
 import prism from "prism-media";
 import path from "path";
-import espeakng_export from "../../lib/espeakng/index.js";
-import ffmpeg_export from "../../lib/ffmpeg/index.js";
-import os from "os";
-import fs from "fs";
-import DiscordJSVoiceLib from "../../lib/discordjs-voice/index.js";
-import ytSearch from "yt-search";
+import speakAndPlay from "../services/speakAndPlay.js";
+import discordJSVoiceLib from "../facades/discordJSVoice.js";
 const workerPath = path.resolve('./src/workers/voiceWorker.js');
 const ACTIVATION_PHRASE = 'ok bot';
 const COMMAND_DICTIONARY =
@@ -173,17 +169,9 @@ export default
                             editReply: async () => {},
                             deleteReply: async () => {}
                         };
-                        console.log(DiscordJSVoiceLib.getStatus(fakeInteraction.client))
-                        console.log(answer)
-                        if (DiscordJSVoiceLib.getStatus(fakeInteraction.client) !== AudioPlayerStatus.Playing && answer !== "")
+                        if (discordJSVoiceLib.getStatus(fakeInteraction.client) !== AudioPlayerStatus.Playing && answer !== "")
                         {
-                            const tempDir = path.resolve(os.tmpdir(), 'thrirebot');
-                            if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-                            const audioPath = path.join(tempDir, `resposta_${fakeInteraction.id}.mp3`);
-                            const searchResult = await ytSearch(fakeInteraction.options.getString('query'));
-                            await espeakng_export(answer(searchResult.videos[0].title), `${audioPath}.mp3`);
-                            await ffmpeg_export(`${audioPath}.wav`)
-                            await DiscordJSVoiceLib.play(fakeInteraction.client, `${audioPath}.mp3`)
+                            await speakAndPlay(fakeInteraction.client, fakeInteraction.options.getString('query'));
                             await entersState(client.audioPlayer, AudioPlayerStatus.Playing, 10_000);
                             await entersState(client.audioPlayer, AudioPlayerStatus.Idle, 10_000);
                         }

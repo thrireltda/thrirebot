@@ -1,37 +1,19 @@
-// src/commands/thrirebot/bot/bot.js
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import {joinVoiceChannel, getVoiceConnection, createAudioPlayer} from '@discordjs/voice';
+import joinVoiceChannel from "../../../services/joinVoiceChannel.js";
 
-export default {
+export default
+{
     data: new SlashCommandSubcommandBuilder()
         .setName('join')
         .setDescription('Faz o bot entrar no seu canal de voz'),
     async execute({ interaction, client })
     {
-        const channel = interaction.member.voice.channel;
-        client.audioPlayer = await createAudioPlayer();
-        client.musicQueue = [];
-        client.isPlaying = false;
-        new Promise((resolve) =>
+        await interaction.deferReply({ ephemeral: true });
         {
-            const connection = joinVoiceChannel
-            ({
-                channelId: channel.id,
-                guildId: interaction.guildId,
-                adapterCreator: interaction.guild.voiceAdapterCreator,
-                selfDeaf: false,
-                selfMute: false
-            });
-            resolve(connection);
-        })
-            .then(async (voiceConnection) =>
-            {
-                client.emit('voiceConnectionAvailable', voiceConnection);
-            });
-
-        return interaction.reply({
-            content: `✅ Entrei no canal de voz: **${channel.name}**`,
-            ephemeral: true
-        });
+            const channel = interaction.member.voice.channel;
+            if (!channel) return interaction.editReply("Você precisa estar em um canal de voz para usar este comando.");
+            joinVoiceChannel(channel, interaction.guild, client)
+        }
+        await interaction.deleteReply();
     }
 };

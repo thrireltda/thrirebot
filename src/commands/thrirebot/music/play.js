@@ -2,7 +2,7 @@ import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
 import { spawn } from 'child_process';
 import { EmbedBuilder } from 'discord.js';
 import ytSearch from 'yt-search';
-import DiscordJSVoiceLib from "../../../../lib/discordjs-voice/index.js";
+import DiscordJSVoiceLib from "../../../facades/discordJSVoice.js";
 
 export default
 {
@@ -19,8 +19,6 @@ export default
         const embed = new EmbedBuilder();
         await interaction.deferReply();
         {
-            console.log("Start play")
-
             client.audioPlayer.on('idle', async () =>
             {
                 if (client.musicQueue.length <= 0 || !client.isPlaying) return;
@@ -52,7 +50,7 @@ async function playNext({interaction, client})
 {
     const track = client.musicQueue.shift();
     const ytdlp = await spawn("yt-dlp", ['-f', 'bestaudio[ext=webm]/bestaudio', '-o', '-', '--quiet', '--no-warnings', track.url], { stdio: ['ignore', 'pipe', 'inherit'] });
-    await DiscordJSVoiceLib.play(client, ytdlp.stdout, null);
+    await DiscordJSVoiceLib.play(client, ytdlp.stdout);
     const embed = new EmbedBuilder()
     .setTitle("🎵 Tocando agora")
     .setDescription(`**[${track.title}](${track.url})**`)
