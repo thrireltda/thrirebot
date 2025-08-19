@@ -1,4 +1,3 @@
-// src/events/ready.js
 import { Events } from 'discord.js';
 import buildAllCommands from '../utils/buildAllCommands.js';
 import scheduleDailyFreeGames from '../utils/scheduleDailyFreeGames.js';

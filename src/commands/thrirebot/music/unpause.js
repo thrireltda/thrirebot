@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import DiscordJSVoiceLib from "../../../../lib/discordjs-voice/index.js";
 
 export default
 {
@@ -7,10 +8,10 @@ export default
         .setDescription("Retoma a música pausada."),
     execute: async ({client, interaction}) =>
     {
-        const queue = await client.player.queues.get(interaction.guild.id);
-        if (!queue) return;
-        if (queue.node.isPaused()) queue.node.resume();
         await interaction.deferReply();
+        {
+            await DiscordJSVoiceLib.unpause(client);
+        }
         await interaction.deleteReply();
     }
 };
