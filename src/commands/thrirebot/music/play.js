@@ -19,6 +19,8 @@ export default
         const embed = new EmbedBuilder();
         await interaction.deferReply();
         {
+            console.log("Start play")
+
             client.audioPlayer.on('idle', async () =>
             {
                 if (client.musicQueue.length <= 0 || !client.isPlaying) return;

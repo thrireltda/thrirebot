@@ -3,6 +3,7 @@ import { AudioPlayerStatus, entersState } from "@discordjs/voice";
 import prism from "prism-media";
 import path from "path";
 import espeakng_export from "../../lib/espeakng/index.js";
+import ffmpeg_export from "../../lib/ffmpeg/index.js";
 import os from "os";
 import fs from "fs";
 import DiscordJSVoiceLib from "../../lib/discordjs-voice/index.js";
@@ -129,65 +130,66 @@ export default
             {
                 for (const [subcommand, cmdData] of Object.entries(commands))
                 {
-                    for (const [info, answer] of Object.values(cmdData))
+                    const { info, answer } = cmdData;
+                    if (info.keywords.some(k => info.keywords.includes(k)))
                     {
-                        if (info.keywords.some(k => info.keywords.includes(k)))
+                        const paramsValues = [];
+                        const parts = commandPart.split(" ").filter(p => !info.keywords.includes(p));
+                        info.params.forEach((param, index) =>
                         {
-                            const paramsValues = [];
-                            const parts = commandPart.split(" ").filter(p => !info.keywords.includes(p));
-                            info.params.forEach((param, index) =>
+                            let value = parts[index] || "";
+                            if (index === info.params.length - 1)
                             {
-                                let value = parts[index] || "";
-                                if (index === info.params.length - 1)
-                                {
-                                    let value = parts.slice(index).join(" ").trim();
-                                    value = value.replace(/^(e\s+)/i, "").trim();
-                                    paramsValues.push(value);
-                                }
+                                let value = parts.slice(index).join(" ").trim();
+                                value = value.replace(/^(e\s+)/i, "").trim();
                                 paramsValues.push(value);
-                            });
-                            const guild = client.guilds.cache.get(guildId);
-                            const member = guild?.members.cache.get(userId);
-                            console.log(`🎤 [VOICE CMD] ${member.user.tag} executou: /thrirebot ${group} ${subcommand} | Params: ${JSON.stringify(paramsValues)} | Servidor: ${guild?.name}`);
-                            const fakeInteraction =
-                            {
-                                client: client,
-                                guild: guild.id,
-                                member: member,
-                                id: Math.random() * (9999999 - 1000000) + 1000000,
-                                channel: member.voice.channel,
-                                user: member.user,
-                                options:
-                                {
-                                    getSubcommandGroup: () => group,
-                                    getSubcommand: () => subcommand,
-                                    getString: (name) =>
-                                    {
-                                        const index = cmdData.info.params.findIndex(p => p.name === name);
-                                        return index >= 0 ? paramsValues[index] : "";
-                                    }
-                                },
-                                reply: () => {},
-                                followUp: () => {},
-                                deferReply: async () => {},
-                                editReply: async () => {},
-                                deleteReply: async () => {}
-                            };
-                            if (DiscordJSVoiceLib.getStatus(fakeInteraction.client) !== AudioPlayerStatus.Playing && answer !== "")
-                            {
-                                const tempDir = path.resolve(os.tmpdir(), 'thrirebot');
-                                if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-                                const audioPath = path.join(tempDir, `resposta_${fakeInteraction.id}.mp3`);
-                                const searchResult = await ytSearch(fakeInteraction.options.getString('query'));
-                                await espeakng_export(answer(searchResult.videos[0].title), audioPath);
-                                await DiscordJSVoiceLib.play(fakeInteraction.client, audioPath)
-                                await entersState(client.audioPlayer, AudioPlayerStatus.Playing, 10_000);
-                                await entersState(client.audioPlayer, AudioPlayerStatus.Idle, 10_000);
                             }
-                            const rootCmd = client.commands.find(c => c.data.name === 'thrirebot');
-                            await rootCmd.execute({ interaction: fakeInteraction, client });
-                            return;
+                            paramsValues.push(value);
+                        });
+                        const guild = client.guilds.cache.get(guildId);
+                        const member = guild?.members.cache.get(userId);
+                        console.log(`🎤 [VOICE CMD] ${member.user.tag} executou: /thrirebot ${group} ${subcommand} | Params: ${JSON.stringify(paramsValues)} | Servidor: ${guild?.name}`);
+                        const fakeInteraction =
+                        {
+                            client: client,
+                            guild: guild.id,
+                            member: member,
+                            id: Math.random() * (9999999 - 1000000) + 1000000,
+                            channel: member.voice.channel,
+                            user: member.user,
+                            options:
+                            {
+                                getSubcommandGroup: () => group,
+                                getSubcommand: () => subcommand,
+                                getString: (name) =>
+                                {
+                                    const index = cmdData.info.params.findIndex(p => p.name === name);
+                                    return index >= 0 ? paramsValues[index] : "";
+                                }
+                            },
+                            reply: () => {},
+                            followUp: () => {},
+                            deferReply: async () => {},
+                            editReply: async () => {},
+                            deleteReply: async () => {}
+                        };
+                        console.log(DiscordJSVoiceLib.getStatus(fakeInteraction.client))
+                        console.log(answer)
+                        if (DiscordJSVoiceLib.getStatus(fakeInteraction.client) !== AudioPlayerStatus.Playing && answer !== "")
+                        {
+                            const tempDir = path.resolve(os.tmpdir(), 'thrirebot');
+                            if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+                            const audioPath = path.join(tempDir, `resposta_${fakeInteraction.id}.mp3`);
+                            const searchResult = await ytSearch(fakeInteraction.options.getString('query'));
+                            await espeakng_export(answer(searchResult.videos[0].title), `${audioPath}.mp3`);
+                            await ffmpeg_export(`${audioPath}.wav`)
+                            await DiscordJSVoiceLib.play(fakeInteraction.client, `${audioPath}.mp3`)
+                            await entersState(client.audioPlayer, AudioPlayerStatus.Playing, 10_000);
+                            await entersState(client.audioPlayer, AudioPlayerStatus.Idle, 10_000);
                         }
+                        const rootCmd = client.commands.find(c => c.data.name === 'thrirebot');
+                        await rootCmd.execute({ interaction: fakeInteraction, client });
+                        return;
                     }
                 }
             }
