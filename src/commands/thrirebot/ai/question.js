@@ -1,6 +1,3 @@
-import path from "path";
-import fs from "fs";
-import os from "os";
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
 import { EmbedBuilder } from 'discord.js';
 import process from "process";
@@ -25,7 +22,7 @@ export default
     execute: async ({ interaction, client }) =>
     {
         const embed = new EmbedBuilder();
-        interaction.deferReply();
+        await interaction.deferReply();
         {
             const prompt = interaction.options.getString('pergunta');
             const usarWeb = interaction.options.getString('usarweb') === 'true';
@@ -35,17 +32,10 @@ export default
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({prompt, usarWeb})
             });
-            try
-            {
-                const data = await response.json();
-                await speakAndPlay(client, data.resposta);
-                embed.setTitle(`${prompt.trim()}`).setDescription(data.resposta);
-                if (data.fontes.length > 0) embed.addFields({name: '🔗 Fontes utilizadas', value: data.fontes.join('\n')});
-            }
-            catch (e)
-            {
-                throw new Error(e);
-            }
+            const data = await response.json();
+            await speakAndPlay(client, data.resposta);
+            embed.setTitle(`${prompt.trim()}`).setDescription(data.resposta);
+            if (data.fontes.length > 0) embed.addFields({name: '🔗 Fontes utilizadas', value: data.fontes.join('\n')});
         }
         await interaction.editReply({ embeds: [embed] });
     },

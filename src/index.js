@@ -1,12 +1,10 @@
-// src/discordJSVoice.js
 import { Client, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import process from 'process';
-
-import getFFmpegPath from './utils/getFfmpegPath.js';
-import getYtdlpPath from "./utils/getYtdlpPath.js";
+import getFFmpegPath from './services/getFFmpegPath.js';
+import getYtdlpPath from "./services/getYtdlpPath.js";
 
 dotenv.config();
 

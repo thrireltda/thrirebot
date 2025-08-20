@@ -1,8 +1,10 @@
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import { spawn } from 'child_process';
 import { EmbedBuilder } from 'discord.js';
+import { AudioPlayerStatus } from "@discordjs/voice";
 import ytSearch from 'yt-search';
-import DiscordJSVoiceLib from "../../../facades/discordJSVoice.js";
+import djsv from "../../../facades/discordJSVoice.js";
+import AudioType from "../../../enums/AudioType.js";
+import playNext from "../../../services/playNext.js";
 
 export default
 {
@@ -19,46 +21,19 @@ export default
         const embed = new EmbedBuilder();
         await interaction.deferReply();
         {
-            if (!client.audioPlayer.musicQueue)
-                client.audioPlayer.musicQueue = [];
-
-            client.audioPlayer.on('idle', async () =>
-            {
-                if (client.audioPlayer.musicQueue.length <= 0 || !client.audioPlayer.isPlaying) return;
-                client.audioPlayer.isPlaying = false;
-                await playNext({interaction, client});
-            });
-            try
-            {
-                const query = interaction.options.getString("query");
-                const queryResults = await ytSearch(query);
-                if (!queryResults) return;
-                const selectedResult = queryResults.videos[0];
-                client.audioPlayer.musicQueue.push(selectedResult);
-                embed.setTitle("🎵 Música adicionada à fila")
-                .setDescription(`**[${selectedResult.title}](${selectedResult.url})**`)
-                .setThumbnail(selectedResult.thumbnail)
-                .setFooter({ text: `Solicitada por ${interaction.user.username}` });
-
-                if (!client.audioPlayer.isPlaying) await playNext({interaction, client});
-            }
-            catch (e)
-            {
-                throw new Error(e);
-            }
+            if (djsv.getStatus(client) === AudioPlayerStatus.Playing && djsv.audioType === AudioType.RADIO)
+                await djsv.stop(client);
+            const query = interaction.options.getString("query");
+            const queryResults = await ytSearch(query);
+            if (!queryResults) return;
+            const selectedResult = queryResults.videos[0];
+            djsv.addToQueue(client, selectedResult);
+            embed.setTitle("🎵 Música adicionada à fila")
+            .setDescription(`**[${selectedResult.title}](${selectedResult.url})**`)
+            .setThumbnail(selectedResult.thumbnail)
+            .setFooter({ text: `Solicitada por ${interaction.user.username}` });
+            if (djsv.getStatus(client) === AudioPlayerStatus.Idle) await playNext(interaction, client);
         }
         await interaction.editReply({ embeds: [embed] });
     }
 };
-async function playNext({interaction, client})
-{
-    const track = client.audioPlayer.musicQueue.shift();
-    const ytdlp = await spawn("yt-dlp", ['-f', 'bestaudio[ext=webm]/bestaudio', '-o', '-', '--quiet', '--no-warnings', track.url], { stdio: ['ignore', 'pipe', 'inherit'] });
-    await DiscordJSVoiceLib.play(client, ytdlp.stdout);
-    const embed = new EmbedBuilder()
-    .setTitle("🎵 Tocando agora")
-    .setDescription(`**[${track.title}](${track.url})**`)
-    .setThumbnail(track.thumbnail)
-    interaction.channel.send({ embeds: [embed] });
-    client.audioPlayer.isPlaying = true;
-}

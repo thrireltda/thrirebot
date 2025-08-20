@@ -1,5 +1,7 @@
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
-import DiscordJSVoiceLib from "../../../facades/discordJSVoice.js";
+import { AudioPlayerStatus } from "@discordjs/voice";
+import discordJSVoice from "../../../facades/discordJSVoice.js";
+import AudioType from "../../../enums/AudioType.js";
 
 export default
 {
@@ -8,9 +10,11 @@ export default
         .setDescription("Para a rádio e desconecta do canal de voz."),
     execute: async ({ client, interaction }) =>
     {
-        await interaction.deferReply({ ephemeral: true })
+        await interaction.deferReply()
         {
-            await DiscordJSVoiceLib.stop(client);
+            if (discordJSVoice.audioType !== AudioType.RADIO || discordJSVoice.getStatus(client) === AudioPlayerStatus.Idle)
+                return interaction.editReply({ content: '❌ Nenhuma rádio está tocando.' });
+            await discordJSVoice.stop(client);
         }
         await interaction.deleteReply();
     }

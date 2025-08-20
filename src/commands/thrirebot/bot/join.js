@@ -1,5 +1,5 @@
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import joinVoiceChannel from "../../../services/joinVoiceChannel.js";
+import voiceConnection from "../../../facades/voiceConnection.js";
 
 export default
 {
@@ -10,11 +10,11 @@ export default
     {
         //todo: verificar se bot não está na call
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply();
         {
             const channel = interaction.member.voice.channel;
             if (!channel) return interaction.editReply("Você precisa estar em um canal de voz para usar este comando.");
-            joinVoiceChannel(channel, interaction.guild, client)
+            await voiceConnection.join(interaction, client)
         }
         await interaction.deleteReply();
     }

@@ -1,6 +1,6 @@
 import { Events } from 'discord.js';
-import buildAllCommands from '../utils/buildAllCommands.js';
-import scheduleDailyFreeGames from '../utils/scheduleDailyFreeGames.js';
+import buildAllCommands from '../services/buildAllCommands.js';
+import scheduleDailyFreeGames from '../services/scheduleDailyFreeGames.js';
 
 export default
 {

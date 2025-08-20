@@ -2,7 +2,8 @@ import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
 import {AudioPlayerStatus, getVoiceConnection} from "@discordjs/voice";
 import process from "process";
 import safelyRespond from "../../../utils/safelyRespond.js";
-import discordJSVoiceLib from "../../../facades/discordJSVoice.js";
+import AudioType from "../../../enums/AudioType.js";
+import discordJSVoice from "../../../facades/discordJSVoice.js";
 
 export default
 {
@@ -28,7 +29,8 @@ export default
         {
             const channel = interaction.member.voice.channel;
             if (!channel) return interaction.editReply("Você precisa estar em um canal de voz para usar este comando.");
-            if (discordJSVoiceLib.getStatus(client) === AudioPlayerStatus.Playing) await discordJSVoiceLib.stop(client)
+            if (discordJSVoice.getStatus(client) === AudioPlayerStatus.Playing && discordJSVoice.audioType === AudioType.MUSIC)
+                await discordJSVoice.stop(client);
             const stationUuid = interaction.options.getString("frequencia");
             await fetch(`${process.env.RADIO_ENDPOINT}/stations/byuuid/${stationUuid}`)
             .then(response =>
@@ -47,7 +49,7 @@ export default
                 station = data[0];
             })
             .catch(console.error)
-            await discordJSVoiceLib.play(client, station.url_resolved)
+            await discordJSVoice.play(client, station.url_resolved, AudioType.RADIO)
         }
         await interaction.editReply(`📻 Sintonizando **${station.name}** (${station.countrycode})...`);
     },

@@ -1,6 +1,7 @@
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
 import process from "process";
 import DiscordJSVoiceLib from "../../../facades/discordJSVoice.js";
+import AudioType from "../../../enums/AudioType.js";
 
 export default
 {
@@ -47,7 +48,7 @@ export default
                 station = data[Math.floor(Math.random() * data.length)];
             })
             .catch(console.error);
-            await DiscordJSVoiceLib.play(client, station.url_resolved)
+            await DiscordJSVoiceLib.play(client, station.url_resolved, AudioType.RADIO)
         }
         await interaction.editReply(`📻 Sintonizando **${station.name}** (${station.countrycode})...`);
     }

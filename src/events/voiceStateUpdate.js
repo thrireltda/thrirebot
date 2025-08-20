@@ -1,6 +1,5 @@
 import { Events } from 'discord.js';
-import joinVoiceChannel from "../services/joinVoiceChannel.js";
-import leaveVoiceChannel from "../services/leaveVoiceChannel.js";
+import voiceConnection from "../facades/voiceConnection.js";
 
 export default
 {
@@ -9,11 +8,11 @@ export default
     {
         if (!oldState.channel && newState.channel && newState.channel.members.size === 1)
         {
-            joinVoiceChannel(newState.channel, newState.guild, client)
+            await voiceConnection.join(newState, client)
         }
         if (oldState.channelId && !newState.channelId && oldState.channel.members.size === 0)
         {
-            leaveVoiceChannel(oldState)
+            await voiceConnection.leave(oldState)
         }
     }
 };

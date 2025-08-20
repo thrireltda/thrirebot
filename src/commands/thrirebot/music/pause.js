@@ -1,5 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import DiscordJSVoiceLib from "../../../facades/discordJSVoice.js";
+import { AudioPlayerStatus } from "@discordjs/voice";
+import AudioType from "../../../enums/AudioType.js";
+import discordJSVoice from "../../../facades/discordJSVoice.js";
 
 export default
 {
@@ -10,7 +12,9 @@ export default
     {
         await interaction.deferReply();
         {
-            await DiscordJSVoiceLib.pause(client);
+            if (discordJSVoice.audioType !== AudioType.MUSIC || discordJSVoice.getStatus(client) === AudioPlayerStatus.Idle)
+                return interaction.editReply({ content: '❌ Nenhuma música está tocando.' });
+            await discordJSVoice.pause(client);
         }
         await interaction.deleteReply();
     }

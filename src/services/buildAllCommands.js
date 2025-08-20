@@ -1,5 +1,5 @@
 import { REST, Routes } from "discord.js";
-import builder from "./builder.js";
+import builder from "../utils/builder.js";
 
 export default async function(client)
 {
