@@ -10,7 +10,7 @@ export default
     {
         await interaction.deferReply({ ephemeral: true });
         {
-            if (!client.audioPlayer || !client.isPlaying) return interaction.editReply({ content: '❌ Nenhuma música está tocando.' });
+            if (!client.audioPlayer || !client.audioPlayer.isPlaying) return interaction.editReply({ content: '❌ Nenhuma música está tocando.' });
             await DiscordJSVoiceLib.stop(client);
         }
         await interaction.deleteReply();

@@ -7,12 +7,11 @@ export default
     name: Events.VoiceStateUpdate,
     async execute(oldState, newState, client)
     {
-        const isBot = (state) => state?.member?.user?.bot;
-        if (!oldState.channel && newState.channel && !isBot(newState))
+        if (!oldState.channel && newState.channel && newState.channel.members.size === 1)
         {
             joinVoiceChannel(newState.channel, newState.guild, client)
         }
-        if (oldState.channelId && !newState.channelId && !isBot(oldState))
+        if (oldState.channelId && !newState.channelId && oldState.channel.members.size === 0)
         {
             leaveVoiceChannel(oldState)
         }

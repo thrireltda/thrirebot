@@ -8,6 +8,8 @@ export default
         .setDescription('Faz o bot entrar no seu canal de voz'),
     async execute({ interaction, client })
     {
+        //todo: verificar se bot não está na call
+
         await interaction.deferReply({ ephemeral: true });
         {
             const channel = interaction.member.voice.channel;

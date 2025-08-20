@@ -19,10 +19,13 @@ export default
         const embed = new EmbedBuilder();
         await interaction.deferReply();
         {
+            if (!client.audioPlayer.musicQueue)
+                client.audioPlayer.musicQueue = [];
+
             client.audioPlayer.on('idle', async () =>
             {
-                if (client.musicQueue.length <= 0 || !client.isPlaying) return;
-                client.isPlaying = false;
+                if (client.audioPlayer.musicQueue.length <= 0 || !client.audioPlayer.isPlaying) return;
+                client.audioPlayer.isPlaying = false;
                 await playNext({interaction, client});
             });
             try
@@ -31,12 +34,13 @@ export default
                 const queryResults = await ytSearch(query);
                 if (!queryResults) return;
                 const selectedResult = queryResults.videos[0];
-                client.musicQueue.push(selectedResult);
+                client.audioPlayer.musicQueue.push(selectedResult);
                 embed.setTitle("🎵 Música adicionada à fila")
                 .setDescription(`**[${selectedResult.title}](${selectedResult.url})**`)
                 .setThumbnail(selectedResult.thumbnail)
                 .setFooter({ text: `Solicitada por ${interaction.user.username}` });
-                if (!client.isPlaying) await playNext({interaction, client});
+
+                if (!client.audioPlayer.isPlaying) await playNext({interaction, client});
             }
             catch (e)
             {
@@ -48,7 +52,7 @@ export default
 };
 async function playNext({interaction, client})
 {
-    const track = client.musicQueue.shift();
+    const track = client.audioPlayer.musicQueue.shift();
     const ytdlp = await spawn("yt-dlp", ['-f', 'bestaudio[ext=webm]/bestaudio', '-o', '-', '--quiet', '--no-warnings', track.url], { stdio: ['ignore', 'pipe', 'inherit'] });
     await DiscordJSVoiceLib.play(client, ytdlp.stdout);
     const embed = new EmbedBuilder()
@@ -56,5 +60,5 @@ async function playNext({interaction, client})
     .setDescription(`**[${track.title}](${track.url})**`)
     .setThumbnail(track.thumbnail)
     interaction.channel.send({ embeds: [embed] });
-    client.isPlaying = true;
+    client.audioPlayer.isPlaying = true;
 }

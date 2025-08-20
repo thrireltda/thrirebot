@@ -19,10 +19,14 @@ export default class DiscordJSVoiceLib
     }
     static async pause(client)
     {
-        client.audioPlayer.pause();
+        client.audioPlayer?.pause();
     }
     static async unpause(client)
     {
-        client.audioPlayer.unpause();
+        client.audioPlayer?.unpause();
+    }
+    static async skip(client)
+    {
+
     }
 }
