@@ -1,5 +1,5 @@
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
-import {AudioPlayerStatus, getVoiceConnection} from "@discordjs/voice";
+import { AudioPlayerStatus } from "@discordjs/voice";
 import process from "process";
 import safelyRespond from "../../../utils/safelyRespond.js";
 import AudioType from "../../../enums/AudioType.js";
@@ -32,7 +32,7 @@ export default
             if (discordJSVoice.getStatus(client) === AudioPlayerStatus.Playing && discordJSVoice.audioType === AudioType.MUSIC)
                 await discordJSVoice.stop(client);
             const stationUuid = interaction.options.getString("frequencia");
-            await fetch(`${process.env.RADIO_ENDPOINT}/stations/byuuid/${stationUuid}`)
+            await fetch(`${process.env.RADIO_API}/stations/byuuid/${stationUuid}`)
             .then(response =>
             {
                 switch (response.ok)
@@ -60,7 +60,7 @@ export default
         switch (focused.name)
         {
             case "pais":
-                await fetch(`${process.env.RADIO_ENDPOINT}/countries`)
+                await fetch(`${process.env.THRIRE_API}/radio/countries?countrycode=${query}`)
                 .then(response =>
                 {
                     switch (response.ok)
@@ -73,13 +73,13 @@ export default
                 })
                 .then(data =>
                 {
-                    const filtered = data
+                    const filtered = data.countries
                     .filter(c => c.name.toLowerCase().includes(query))
                     .slice(0, 25)
                     .map(c =>
                     ({
-                        name: `${c.name} (${c.iso_3166_1})`,
-                        value: c.iso_3166_1
+                        name: c.name.replace(/[()]/g, "").replace(c.value, "").slice(0, -1),
+                        value: c.value
                     }));
                     return safelyRespond(interaction, filtered);
                     })
@@ -88,7 +88,7 @@ export default
             case "frequencia":
                 const countryCode = interaction.options.getString("pais");
                 if (!countryCode) return safelyRespond(interaction, []);
-                await fetch(`${process.env.RADIO_ENDPOINT}/stations/bycountrycodeexact/${encodeURIComponent(countryCode)}?hidebroken=true&order=votes&reverse=true`)
+                await fetch(`${process.env.THRIRE_API}/radio/stationsbycountrycodeexact?countrycode=${countryCode}&frequency=${query}`)
                 .then(response =>
                 {
                     switch (response.ok)
@@ -101,21 +101,15 @@ export default
                 })
                 .then(data =>
                 {
-                    const vistos = new Set();
-                    const lista = [];
-                    for (const s of data)
-                    {
-                        const match = s.name.match(/(\d{2,3}(\.\d{1,2})?)/);
-                        if (!match) continue;
-                        const freq = match[0];
-                        if (query && !freq.startsWith(query)) continue;
-                        const chave = `${freq}-${s.name}`;
-                        if (vistos.has(chave)) continue;
-                        vistos.add(chave);
-                        lista.push({name: `[${freq}] ${s.name}`, value: s.stationuuid});
-                        if (lista.length >= 25) break;
-                    }
-                    return safelyRespond(interaction, lista);
+                    const filtered = data.stations
+                    .filter(c => c.name.toLowerCase().includes(query))
+                    .slice(0, 25)
+                    .map(c =>
+                    ({
+                        name: c.name,
+                        value: c.value
+                    }));
+                    return safelyRespond(interaction, filtered);
                 })
                 .catch(console.error)
                 break;
