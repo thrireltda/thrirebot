@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import process from 'process';
-import getFFmpegPath from './services/getFFmpegPath.js';
-import getYtdlpPath from "./services/getYtdlpPath.js";
+import getFFmpegPath from '#services/getFFmpegPath.js';
+import getYtdlpPath from "#services/getYtdlpPath.js";
 
 dotenv.config();
 
@@ -25,15 +25,13 @@ const client = new Client
 });
 
 // Carrega eventos dinamicamente
-const eventsPath = path.resolve('./src/events');
+const eventsPath = path.resolve('./src/core/events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 for (const file of eventFiles)
 {
-    const event = (await import(`./events/${file}`)).default;
-    if (event.once)
-        client.once(event.name, (...args) => event.execute(...args, client));
-    else
-        client.on(event.name, (...args) => event.execute(...args, client));
+    const event = (await import(`#events/${file}`)).default;
+    if (event.once) client.once(event.name, (...args) => event.execute(...args, client));
+    else client.on(event.name, (...args) => event.execute(...args, client));
 }
 
 // Inicia o bot

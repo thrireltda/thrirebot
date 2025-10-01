@@ -1,7 +1,8 @@
+/*
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
 import { joinVoiceChannel, createAudioResource, createAudioPlayer, StreamType, EndBehaviorType } from "@discordjs/voice";
-import safelyRespond from "../../../utils/safelyRespond.js";
-import voiceConnection from "../../../facades/voiceConnection.js";
+import safelyRespond from "../../../core/utils/safelyRespond.js";
+import voiceConnection from "../../../core/facades/voiceConnection.js";
 
 export default
 {
@@ -95,4 +96,4 @@ export default
             }
         }
     }
-};
+};*/

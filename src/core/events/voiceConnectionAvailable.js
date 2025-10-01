@@ -4,7 +4,7 @@ import prism from "prism-media";
 import path from "path";
 import speakAndPlay from "../services/speakAndPlay.js";
 import discordJSVoiceLib from "../facades/discordJSVoice.js";
-const workerPath = path.resolve('./src/workers/voiceWorker.js');
+const workerPath = path.resolve('./src/core/workers/voiceWorker.js');
 const ACTIVATION_PHRASE = 'ok bot';
 const COMMAND_DICTIONARY =
 {

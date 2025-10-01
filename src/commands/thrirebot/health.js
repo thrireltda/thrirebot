@@ -1,3 +1,4 @@
+/*
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
 import { EmbedBuilder } from 'discord.js';
 import process from "process";
@@ -47,4 +48,4 @@ export default
         }
         await interaction.editReply({ embeds: [embed] });
     }
-};
+};*/

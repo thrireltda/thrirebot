@@ -1,39 +1,28 @@
-import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import { EmbedBuilder } from 'discord.js';
+import createsubcommand from "#utils/createsubcommand.js";
+import vc from "../../../core/facades/voiceConnection.js";
+import djsv from "../../../core/facades/discordJSVoice.js";
 import { AudioPlayerStatus } from "@discordjs/voice";
+import AudioType from "../../../core/enums/AudioType.js";
 import ytSearch from 'yt-search';
-import djsv from "../../../facades/discordJSVoice.js";
-import AudioType from "../../../enums/AudioType.js";
-import playNext from "../../../services/playNext.js";
+import playNext from "../../../core/services/playNext.js";
+import createembed from "#utils/createembed.js";
 
-export default
-{
-    data: new SlashCommandSubcommandBuilder()
-        .setName("play")
-        .setDescription("Toca uma música")
-        .addStringOption(option =>
-            option.setName("query")
-                .setDescription("Nome ou link da música")
-                .setRequired(true)
-        ),
-    execute: async ({ interaction, client }) =>
-    {
-        const embed = new EmbedBuilder();
+export default {
+    data: await createsubcommand("play", "Toca uma música / playlist", [
+        { type: String, name: "query", description: "Nome ou link da música / playlist", autocomplete: false, required: true },
+    ]),
+    execute: async ({ interaction, client }) => {
         await interaction.deferReply();
-        {
-            if (djsv.getStatus(client) === AudioPlayerStatus.Playing && djsv.audioType === AudioType.RADIO)
-                await djsv.stop(client);
-            const query = interaction.options.getString("query");
-            const queryResults = await ytSearch(query);
-            if (!queryResults) return;
-            const selectedResult = queryResults.videos[0];
-            djsv.addToQueue(client, selectedResult);
-            embed.setTitle("🎵 Música adicionada à fila")
-            .setDescription(`**[${selectedResult.title}](${selectedResult.url})**`)
-            .setThumbnail(selectedResult.thumbnail)
-            .setFooter({ text: `Solicitada por ${interaction.user.username}` });
-            if (djsv.getStatus(client) === AudioPlayerStatus.Idle) await playNext(interaction, client);
-        }
-        await interaction.editReply({ embeds: [embed] });
+        if (!vc.connection)
+            await vc.join(interaction, client);
+        if (djsv.getStatus(client) === AudioPlayerStatus.Playing && djsv.audioType !== AudioType.MUSIC)
+            await djsv.stop(client);
+        const query = interaction.options.getString("query");
+        const queryResults = await ytSearch(query);
+        if (!queryResults) return;
+        const selectedResult = queryResults.videos[0];
+        await djsv.addToQueue(client, selectedResult);
+        if (djsv.getStatus(client) === AudioPlayerStatus.Idle) await playNext(interaction, client);
+        await interaction.editReply({ embeds: [ await createembed("🎵 Música adicionada à fila", `**[${selectedResult.title}](${selectedResult.url})**`, selectedResult.thumbnail, null, { text: `Solicitada por ${interaction.user.username}` }) ] });
     }
 };

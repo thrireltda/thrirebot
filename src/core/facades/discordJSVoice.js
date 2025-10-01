@@ -1,6 +1,7 @@
 import { createAudioResource, StreamType } from '@discordjs/voice';
-import AudioType from "../enums/AudioType.js";
-import playNext from "../services/playNext.js";
+import AudioType from "#enums/AudioType.js";
+import playNext from "#services/playNext.js";
+import audioType from "#enums/AudioType.js";
 
 export default class discordJSVoice
 {
@@ -37,6 +38,7 @@ export default class discordJSVoice
     static async stop(client)
     {
         client.audioPlayer.musicQueue = [];
+        this.audioType = AudioType.DEFAULT;
         await client.audioPlayer?.stop();
     }
     static async pause(client)

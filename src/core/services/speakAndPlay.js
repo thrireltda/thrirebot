@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
-import discordJSVoice from "../facades/discordJSVoice.js";
+import djsv from "../facades/discordJSVoice.js";
+import AudioType from "#enums/AudioType.js";
 
 export default async function(client, resposta)
 {
@@ -10,9 +11,23 @@ export default async function(client, resposta)
         espeakng.stdout.pipe(ffmpeg.stdin);
         espeakng.stdin.write(resposta);
         espeakng.stdin.end();
+
+        client.audioPlayer.once("stateChange", (oldState, newState) => {
+            if (newState.status === "idle" && djsv.audioType !== AudioType.ESPEAK) {
+                espeakng.kill("SIGKILL");
+                ffmpeg.kill("SIGKILL");
+            }
+        });
+        ffmpeg.stdin.on("error", (err) => {
+            if (err.code !== "EPIPE" && err.code !== "EOF") reject(err);
+        });
+        espeakng.stdin.on("error", (err) => {
+            if (err.code !== "EPIPE" && err.code !== "EOF") reject(err);
+        });
+
+
         ffmpeg.on("error", reject);
         espeakng.on("error", reject);
-        await discordJSVoice.stop(client);
-        await discordJSVoice.play(client, ffmpeg.stdout).then(resolve).catch(reject);
+        await djsv.play(client, ffmpeg.stdout, AudioType.ESPEAK).then(resolve).catch(reject);
     })
 }

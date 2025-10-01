@@ -1,21 +1,11 @@
-import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import { AudioPlayerStatus } from "@discordjs/voice";
-import AudioType from "../../../enums/AudioType.js";
-import discordJSVoice from "../../../facades/discordJSVoice.js";
+import djsv from "#facades/discordJSVoice.js";
+import createsubcommand from "#utils/createsubcommand.js";
 
-export default
-{
-    data: new SlashCommandSubcommandBuilder()
-        .setName("skip")
-        .setDescription("Pula para a próxima música da fila."),
-    execute: async ({ interaction, client }) =>
-    {
-        await interaction.deferReply();
-        {
-            if (discordJSVoice.audioType !== AudioType.MUSIC || discordJSVoice.getStatus(client) === AudioPlayerStatus.Idle)
-                return interaction.editReply({ content: '❌ Nenhuma música está tocando.' });
-            await discordJSVoice.skip(interaction, client);
-        }
+export default {
+    data: await createsubcommand("skip", "Pula a música / playlist tocando."),
+    execute: async ({ interaction, client }) => {
+        await interaction.deferReply()
+        await djsv.skip(client);
         await interaction.deleteReply();
     }
 };

@@ -1,41 +1,20 @@
-import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
+import createsubcommand from "#utils/createsubcommand.js";
+import fetchendpoint from "#utils/fetchendpoint.js";
+import createembed from "#utils/createembed.js";
 
-export default
-{
-    data: new SlashCommandSubcommandBuilder()
-        .setName('adicionar')
-        .setDescription('Adiciona uma frase do dia na da API da Thrire.')
-        .addStringOption(option =>
-            option.setName("query")
-                .setDescription("Frase para adicionar")
-                .setRequired(true)
-        ),
-    execute: async ({ interaction }) =>
-    {
-        let reply;
+export default {
+    data: await createsubcommand("adicionar", "Adiciona uma frase do dia na da API da Thrire.", [
+        { type: String, name: "frase", description: "Frase para adicionar", autocomplete: false, required: true },
+    ]),
+    execute: async ({ interaction }) => {
         await interaction.deferReply();
-        {
-            const query = interaction.options.getString('query');
-            await fetch(`${process.env.THRIRE_API}/dailyphrase/dailyphrase`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phrase_text: query }),
-            })
-            .then(response =>
-            {
-                switch (response.ok)
-                {
-                    case true:
-                        reply = `✅ Frase adicionada com sucesso`;
-                        break;
-                    case false:
-                        reply = `❌ Ocorreu um erro ao processar sua requisição.`;
-                        break;
-                }
-            })
-            .catch(console.error);
-        }
-        await interaction.editReply(reply);
+        const data = await fetchendpoint(
+            `${process.env.THRIRE_API}/v1/dailyphrase/dailyphrase`,
+            "POST",
+            { 'Content-Type': 'application/json' },
+            JSON.stringify({ phrase_text: interaction.options.getString('query') } )
+        )
+        if (!data.response) await interaction.editReply({ embeds: [ createembed(null, `❌ Ocorreu um erro ao processar sua requisição.\n\`\`\`${data.error.message}\`\`\``, null, "Red") ] })
+        await interaction.editReply({ embeds: [ createembed(`✅ Frase adicionada com sucesso`) ] });
     }
 };

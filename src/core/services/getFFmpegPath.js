@@ -10,5 +10,5 @@ export default function()
     const arch = os.arch();         // x64 / arm64
     const folder = `${platform}-${arch}`;
     const binary = platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
-    return path.join(__dirname, '..', '..', 'bin', 'ffmpeg', folder, binary);
+    return path.join(__dirname, '..', '..', "..", 'bin', 'ffmpeg', folder, binary);
 }

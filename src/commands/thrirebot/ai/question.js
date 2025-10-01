@@ -1,70 +1,47 @@
-import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import { EmbedBuilder } from 'discord.js';
-import { AudioPlayerStatus } from "@discordjs/voice";
-import process from "process";
-import speakAndPlay from "../../../services/speakAndPlay.js";
-import discordJSVoice from "../../../facades/discordJSVoice.js";
+import createsubcommand from "#utils/createsubcommand.js";
+import fetchendpoint from "#utils/fetchendpoint.js";
+import createembed from "#utils/createembed.js";
+import vc from "#facades/voiceConnection.js";
+import speakAndPlay from "../../../core/services/speakAndPlay.js";
+import djsv from "#facades/discordJSVoice.js";
+import {AudioPlayerStatus} from "@discordjs/voice";
+import AudioType from "#enums/AudioType.js";
 
-export default
-{
-    data: new SlashCommandSubcommandBuilder()
-        .setName('question')
-        .setDescription('Faça uma pergunta para o GPT.')
-        .addStringOption(option =>
-            option.setName('pergunta')
-                .setDescription('A pergunta em si.')
-                .setRequired(true)
-        )
-        .addStringOption(option =>
-            option.setName('usarweb')
-                .setDescription('Buscar fatos na web?')
-                .setAutocomplete(true)
-                .setRequired(false)
-        ),
-    execute: async ({ interaction, client }) =>
-    {
-        const embed = new EmbedBuilder();
+export default {
+    data: await createsubcommand("question", "Faça um pergunta para um agente de IA", [
+        { type: String, name: "model", description: "Modelo para ser utilizado", autocomplete: true, required: true },
+        { type: String, name: "prompt", description: "Prompt para ser executado", autocomplete: false, required: true },
+        { type: String, name: "search", description: "Buscar fatos na web?", autocomplete: true, required: false }
+    ]),
+    execute: async ({ interaction, client }) =>  {
         await interaction.deferReply();
-        {
-            const prompt = interaction.options.getString('pergunta');
-            const usarWeb = interaction.options.getString('usarweb') === 'true';
-            await fetch(`${process.env.THRIRE_API}/askquestion`,
-            {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({prompt, usarWeb})
-            })
-            .then(response =>
-            {
-                switch (response.ok)
-                {
-                    case true:
-                        return response.json();
-                    case false:
-                        throw new Error("Network response was not ok.");
-                }
-            })
-            .then(async data =>
-            {
-                if (discordJSVoice.getStatus(client) === AudioPlayerStatus.Idle)
-                    await speakAndPlay(client, data.response);
-                embed.setTitle(`P: ${prompt.trim()}`).setDescription(`R: ${data.response}`);
-                if (data.sources)
-                    embed.addFields({name: '🔗 Fontes utilizadas', value: data.sources.join('\n')});
-            })
-            .catch(console.error);
+        const data = await fetchendpoint(
+            `${process.env.THRIRE_API}/v3/ai/askquestion`,
+            "POST",
+            { 'Content-Type': 'application/json' },
+            JSON.stringify({ model: interaction.options.getString('model'), prompt: interaction.options.getString('prompt'), search: interaction.options.getString('usarweb') === 'true' })
+        )
+        if (!data.response) {
+            await interaction.editReply({ embeds: [ await createembed(null, `❌ Não foi possível se conectar com a API.\n\`\`\`${data.error.message}\`\`\``, null, "Red") ] })
+            return;
         }
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [ await createembed(null, `${data.response}`) ] });
+        if (!interaction.member.voice.channel) return;
+        if (!vc.connection) await vc.join(interaction, client);
+        if (djsv.getStatus(client) === AudioPlayerStatus.Playing && djsv.audioType !== AudioType.ESPEAK) return;
+        await speakAndPlay(client, data.response);
     },
-    autocomplete: async ({ interaction }) =>
-    {
-        const focused = interaction.options.getFocused(true).value.toLowerCase();
-        const name = interaction.options.getFocused(true).name;
-        switch (name)
-        {
-            case 'usarweb':
-                const filtered = ['true', 'false'].filter(v => v.startsWith(focused)).map(v => ({ name: v, value: v }));
-                await interaction.respond(filtered);
+    autocomplete: async ({ interaction }) => {
+        const name = interaction.options.getFocused(true).name.toLowerCase();
+        const value = interaction.options.getFocused(true).value.toLowerCase();
+        switch (name) {
+            case 'model':
+                const data = await fetchendpoint(`${process.env.THRIRE_API}/v3/ai/models?opt=0`)
+                if (data === undefined) break;
+                await interaction.respond(data.models.filter(c => c.name.toLowerCase().includes(value)).map(c => ({ name: c.name, value: c.name })));
+                break;
+            case 'search':
+                await interaction.respond(['true', 'false'].filter(v => v.startsWith(value)).map(v => ({ name: v, value: v })));
                 break;
         }
     }

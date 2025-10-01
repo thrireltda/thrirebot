@@ -1,21 +1,11 @@
-import { SlashCommandBuilder } from '@discordjs/builders';
-import { AudioPlayerStatus } from "@discordjs/voice";
-import AudioType from "../../../enums/AudioType.js";
-import discordJSVoice from "../../../facades/discordJSVoice.js";
+import createsubcommand from "#utils/createsubcommand.js";
+import djsv from "#facades/discordJSVoice.js";
 
-export default
-{
-    data: new SlashCommandBuilder()
-        .setName("pause")
-        .setDescription("Pauses the current playing song."),
-    execute: async ({client, interaction}) =>
-    {
-        await interaction.deferReply();
-        {
-            if (discordJSVoice.audioType !== AudioType.MUSIC || discordJSVoice.getStatus(client) === AudioPlayerStatus.Idle)
-                return interaction.editReply({ content: '❌ Nenhuma música está tocando.' });
-            await discordJSVoice.pause(client);
-        }
+export default {
+    data: await createsubcommand("pause", "Pausa a música / playlist tocando"),
+    execute: async ({client, interaction}) => {
+        await interaction.deferReply()
+        await djsv.pause(client);
         await interaction.deleteReply();
     }
 };

@@ -8,20 +8,30 @@
     "thrirebot",
     "discord"
   ],
+  "author": "Thrire LTDA",
   "homepage": "https://thrire.com",
-  "bugs": {
-    "url": "https://github.com/thrireinc/thrirebot/issues"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thrireinc/thrirebot.git"
   },
+  "bugs": {
+    "url": "https://github.com/thrireinc/thrirebot/issues"
+  },
   "license": "ISC",
-  "author": "Thrire LTDA",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "start": "node ."
+    "start": "node .",
+    "test": ""
+  },
+  "imports": {
+    "#/*": "./",
+    "#enums/*": "./src/core/enums/*",
+    "#events/*": "./src/core/events/*",
+    "#facades/*": "./src/core/facades/*",
+    "#services/*": "./src/core/services/*",
+    "#utils/*": "./src/core/utils/*",
+    "#workers/*": "./src/core/workers/*"
   },
   "dependencies":
   {

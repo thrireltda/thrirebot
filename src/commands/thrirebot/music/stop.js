@@ -1,21 +1,11 @@
-import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import { AudioPlayerStatus } from "@discordjs/voice";
-import discordJSVoice from "../../../facades/discordJSVoice.js";
-import AudioType from "../../../enums/AudioType.js";
+import createsubcommand from "#utils/createsubcommand.js";
+import djsv from "#facades/discordJSVoice.js";
 
-export default
-{
-    data: new SlashCommandSubcommandBuilder()
-        .setName("stop")
-        .setDescription("Para a música e limpa a fila."),
-    execute: async ({ client, interaction }) =>
-    {
-        await interaction.deferReply();
-        {
-            if (discordJSVoice.audioType !== AudioType.MUSIC || discordJSVoice.getStatus(client) === AudioPlayerStatus.Idle)
-                return interaction.editReply({ content: '❌ Nenhuma música está tocando.' });
-            await discordJSVoice.stop(client);
-        }
+export default {
+    data: await createsubcommand("stop", "Limpa a fila atual de músicas / playlists."),
+    execute: async ({ client, interaction }) => {
+        await interaction.deferReply()
+        await djsv.stop(client);
         await interaction.deleteReply();
     }
 };

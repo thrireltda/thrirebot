@@ -1,5 +1,6 @@
+/*
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import voiceConnection from "../../../facades/voiceConnection.js";
+import voiceConnection from "../../../core/facades/voiceConnection.js";
 
 export default
 {
@@ -18,4 +19,4 @@ export default
         }
         await interaction.deleteReply();
     }
-};
+};*/

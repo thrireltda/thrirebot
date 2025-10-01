@@ -1,7 +1,7 @@
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
 import process from "process";
-import DiscordJSVoiceLib from "../../../facades/discordJSVoice.js";
-import AudioType from "../../../enums/AudioType.js";
+import DiscordJSVoiceLib from "../../../core/facades/discordJSVoice.js";
+import AudioType from "../../../core/enums/AudioType.js";
 
 export default
 {
