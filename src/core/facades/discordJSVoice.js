@@ -12,19 +12,21 @@ export default class discordJSVoice
     }
     static getQueueSize(client)
     {
-        return client.audioPlayer.musicQueue.length;
+        return client.audioPlayer?.musicQueue.length;
     }
     static getQueue(client)
     {
-        return client.audioPlayer.musicQueue;
+        return client.audioPlayer?.musicQueue;
     }
-    static addToQueue(client, result)
+    static async addToQueue(client, result)
     {
-        client.audioPlayer.musicQueue.push(result);
+        let currentSize = client.audioPlayer?.musicQueue.length;
+        await client.audioPlayer?.musicQueue.push(result);
+        return client.audioPlayer?.musicQueue.length > currentSize
     }
     static popFromQueue(client)
     {
-        return client.audioPlayer.musicQueue.shift();
+        return client.audioPlayer?.musicQueue.shift();
     }
     static async play(client, source, audioType = AudioType.DEFAULT)
     {
