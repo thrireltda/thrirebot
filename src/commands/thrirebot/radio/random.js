@@ -1,55 +1,31 @@
-import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
-import process from "process";
-import DiscordJSVoiceLib from "../../../core/facades/discordJSVoice.js";
+import createsubcommand from "#utils/createsubcommand.js";
+import vc from "#facades/vc.js";
+import fetchendpoint from "#utils/fetchendpoint.js";
+import djsv from "#facades/djsv.js";
 import AudioType from "../../../core/enums/AudioType.js";
 
 export default
 {
-    data: new SlashCommandSubcommandBuilder()
-        .setName("random")
-        .setDescription("Sintoniza uma rádio aleatória de um país aleatório"),
+    data: await createsubcommand("random", "Sintoniza uma estação de rádio aleatória", []),
     execute: async ({ client, interaction }) =>
     {
-        let station = null;
         await interaction.deferReply();
+        const channel = interaction.member.voice.channel;
+        if (!channel) return interaction.editReply("Você precisa estar em um canal de voz para usar este comando.");
+        if (!vc.connection) await vc.join(interaction, client);
+        let countries = null;
+        let country = null;
+        let stations = null;
+        do
         {
-            const channel = interaction.member.voice.channel;
-            if (!channel) return interaction.editReply("Você precisa estar em um canal de voz para usar este comando.");
-            let country = null;
-            await fetch(`${process.env.RADIO_ENDPOINT}/countries`)
-            .then(response =>
-            {
-                switch (response.ok)
-                {
-                    case true:
-                        return response.json();
-                    case false:
-                        throw new Error("Network response was not ok.");
-                }
-            })
-            .then(data =>
-            {
-                country = data[Math.floor(Math.random() * data.length)];
-            })
-            .catch(console.error);
-            await fetch(`${process.env.RADIO_ENDPOINT}/stations/bycountrycodeexact/${country.iso_3166_1}?hidebroken=true`)
-            .then(response =>
-            {
-                switch (response.ok)
-                {
-                    case true:
-                        return response.json();
-                    case false:
-                        throw new Error("Network response was not ok.");
-                }
-            })
-            .then(data =>
-            {
-                station = data[Math.floor(Math.random() * data.length)];
-            })
-            .catch(console.error);
-            await DiscordJSVoiceLib.play(client, station.url_resolved, AudioType.RADIO)
+            countries = await fetchendpoint(`${process.env.THRIRE_API}/v1/countries?countrycode=`)
+            country = countries.countries[Math.floor(Math.random() * countries.countries.length)];
+            stations = await fetchendpoint(`${process.env.THRIRE_API}/v1/stationsbycountrycodeexact?countrycode=${country.value}&frequency=`);
         }
-        await interaction.editReply(`📻 Sintonizando **${station.name}** (${station.countrycode})...`);
+        while (stations === null || stations.stations.length === 0)
+        let station = stations.stations[Math.floor(Math.random() * stations.stations.length)];
+        let url = await fetchendpoint(`${process.env.THRIRE_API}/v1/stationsbyuuid?stationuuid=${station.value}`)
+        await djsv.play(client, url.url, AudioType.RADIO)
+        await interaction.editReply(`📻 Sintonizando **${station.name}** (${country.value})...`);
     }
 };

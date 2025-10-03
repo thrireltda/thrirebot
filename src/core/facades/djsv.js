@@ -1,9 +1,7 @@
-import { createAudioResource, StreamType } from '@discordjs/voice';
+import {AudioPlayerStatus, createAudioResource, StreamType} from '@discordjs/voice';
 import AudioType from "#enums/AudioType.js";
-import playNext from "#services/playNext.js";
-import audioType from "#enums/AudioType.js";
 
-export default class discordJSVoice
+export default class
 {
     static audioType;
 
@@ -19,11 +17,11 @@ export default class discordJSVoice
     {
         return client.audioPlayer?.musicQueue;
     }
-    static async addToQueue(client, result)
+    static async addToQueue(interaction, client, result)
     {
-        let currentSize = client.audioPlayer?.musicQueue.length;
         await client.audioPlayer?.musicQueue.push(result);
-        return client.audioPlayer?.musicQueue.length > currentSize
+        if (this.getStatus(client) !== AudioPlayerStatus.Idle) return;
+        client.emit("audioPlayerIdle", interaction);
     }
     static popFromQueue(client)
     {
@@ -32,8 +30,8 @@ export default class discordJSVoice
     static async play(client, source, audioType = AudioType.DEFAULT)
     {
         this.audioType = audioType
-        const resource = await createAudioResource(source, { opusEncoded: true, inputType: StreamType.Arbitrary });
-        await client.audioPlayer?.play(resource, { type: "opus" });
+        const resource = createAudioResource(source, { inputType: StreamType.OggOpus, opusEncoded: true });
+        await client.audioPlayer?.play(resource);
     }
     static async stop(client)
     {
@@ -51,6 +49,6 @@ export default class discordJSVoice
     }
     static async skip(interaction, client)
     {
-        await playNext(interaction, client)
+        client.emit("audioPlayerIdle", interaction);
     }
 }

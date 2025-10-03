@@ -1,6 +1,12 @@
-import { createAudioPlayer, getVoiceConnection, joinVoiceChannel } from "@discordjs/voice";
+import {
+    createAudioPlayer,
+    entersState,
+    getVoiceConnection,
+    joinVoiceChannel,
+    VoiceConnectionStatus
+} from "@discordjs/voice";
 
-export default class voiceConnection
+export default class
 {
     static connection;
 
@@ -21,7 +27,8 @@ export default class voiceConnection
                 selfDeaf: false,
                 selfMute: false
             });
-            await client.emit('voiceConnectionAvailable', this.connection);
+            await entersState(this.connection, VoiceConnectionStatus.Ready, 10_000);
+            this.connection.subscribe(client.audioPlayer);
             resolve();
         })
         .catch(console.error);

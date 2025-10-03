@@ -2,52 +2,9 @@ import { Worker } from "worker_threads";
 import { AudioPlayerStatus, entersState } from "@discordjs/voice";
 import prism from "prism-media";
 import path from "path";
-import speakAndPlay from "../services/speakAndPlay.js";
-import discordJSVoiceLib from "../facades/discordJSVoice.js";
+import speakAndPlay from "src/temp/speakAndPlay.js";
+import discordJSVoiceLib from "#facades/djsv.js";
 const workerPath = path.resolve('./src/core/workers/voiceWorker.js');
-const ACTIVATION_PHRASE = 'ok bot';
-const COMMAND_DICTIONARY =
-{
-    music:
-    {
-        play:
-        {
-            info:
-            {
-                keywords: ['play', 'toque', 'tocar', 'toca', 'reproduza', 'reproduzir', 'coloque', 'colocar', 'coloca'],
-                params: [{name: 'query', type: 'string'}]
-            },
-            answer: (musica) => `Claro! Tocando agora ${musica} no youtube.`
-        },
-        pause:
-        {
-            info:
-            {
-                keywords: ['pause', 'pausar', 'pausa', 'segura'],
-                params: []
-            },
-            answer: ""
-        },
-        stop:
-        {
-            info:
-            {
-                keywords: ['pare', 'parar', 'stop', 'cancela'],
-                params: []
-            },
-            answer: ""
-        },
-        skip:
-        {
-            info:
-            {
-                keywords: ['pula', 'pular', 'skip', 'avança'],
-                params: []
-            },
-            answer: ""
-        }
-    }
-};
 
 export default
 {

@@ -1,6 +1,6 @@
 /*
 import { SlashCommandSubcommandBuilder } from '@discordjs/builders';
-import voiceConnection from "../../../core/facades/voiceConnection.js";
+import voiceConnection from "../../../core/facades/vc.js";
 
 export default
 {

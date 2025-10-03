@@ -1,11 +1,12 @@
 import createsubcommand from "#utils/createsubcommand.js";
 import fetchendpoint from "#utils/fetchendpoint.js";
 import createembed from "#utils/createembed.js";
-import vc from "#facades/voiceConnection.js";
-import speakAndPlay from "../../../core/services/speakAndPlay.js";
-import djsv from "#facades/discordJSVoice.js";
-import {AudioPlayerStatus} from "@discordjs/voice";
+import vc from "#facades/vc.js";
+import djsv from "#facades/djsv.js";
+import { AudioPlayerStatus } from "@discordjs/voice";
 import AudioType from "#enums/AudioType.js";
+import invokeFfmpeg from "#utils/invokeFfmpeg.js";
+import invokeEspeakng from "#utils/invokeEspeakng.js";
 
 export default {
     data: await createsubcommand("question", "Faça um pergunta para um agente de IA", [
@@ -29,7 +30,9 @@ export default {
         if (!interaction.member.voice.channel) return;
         if (!vc.connection) await vc.join(interaction, client);
         if (djsv.getStatus(client) === AudioPlayerStatus.Playing && djsv.audioType !== AudioType.ESPEAK) return;
-        await speakAndPlay(client, data.response);
+        const ffmpeg = await invokeFfmpeg(client);
+        const stdout = await invokeEspeakng(client, ffmpeg, data.response);
+        await djsv.play(client, stdout, AudioType.ESPEAK);
     },
     autocomplete: async ({ interaction }) => {
         const name = interaction.options.getFocused(true).name.toLowerCase();
