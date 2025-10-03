@@ -1,5 +1,5 @@
 import createsubcommand from "#utils/createsubcommand.js";
-import djsv from "#facades/discordJSVoice.js";
+import djsv from "#facades/djsv.js";
 
 export default {
     data: await createsubcommand("unpause", "Despausa a música / playlist tocando"),

@@ -2,7 +2,7 @@
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
 import { joinVoiceChannel, createAudioResource, createAudioPlayer, StreamType, EndBehaviorType } from "@discordjs/voice";
 import safelyRespond from "../../../core/utils/safelyRespond.js";
-import voiceConnection from "../../../core/facades/voiceConnection.js";
+import voiceConnection from "../../../core/facades/vc.js";
 
 export default
 {

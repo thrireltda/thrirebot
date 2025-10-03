@@ -1,5 +1,5 @@
 import { Events } from 'discord.js';
-import voiceConnection from "../facades/voiceConnection.js";
+import voiceConnection from "#facades/vc.js";
 
 export default
 {

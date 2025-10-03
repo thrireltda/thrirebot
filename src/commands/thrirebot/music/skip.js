@@ -1,4 +1,4 @@
-import djsv from "#facades/discordJSVoice.js";
+import djsv from "#facades/djsv.js";
 import createsubcommand from "#utils/createsubcommand.js";
 
 export default {

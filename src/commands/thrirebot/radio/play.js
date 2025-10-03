@@ -1,6 +1,6 @@
 import AudioType from "#enums/AudioType.js";
-import discordJSVoice from "#facades/discordJSVoice.js";
-import vc from "#facades/voiceConnection.js";
+import djsv from "#facades/djsv.js";
+import vc from "#facades/vc.js";
 import createsubcommand from "#utils/createsubcommand.js";
 import fetchendpoint from "#utils/fetchendpoint.js";
 
@@ -15,7 +15,7 @@ export default
         await interaction.deferReply();
         if (!vc.connection) await vc.join(interaction, client);
         const data = await fetchendpoint(`${process.env.THRIRE_API}/v1/stationsbyuuid?stationuuid=${interaction.options.getString("frequencia")}`)
-        await discordJSVoice.play(client, data.url, AudioType.RADIO)
+        await djsv.play(client, data.url, AudioType.RADIO)
         await interaction.editReply(`📻 Sintonizando **${data.name}**`);
     },
     autocomplete: async ({ interaction }) => {
