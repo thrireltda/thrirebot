@@ -32,8 +32,8 @@ export default class discordJSVoice
     static async play(client, source, audioType = AudioType.DEFAULT)
     {
         this.audioType = audioType
-        const resource = await createAudioResource(source, { inputType: StreamType.Arbitrary });
-        await client.audioPlayer?.play(resource);
+        const resource = await createAudioResource(source, { opusEncoded: true, inputType: StreamType.Arbitrary });
+        await client.audioPlayer?.play(resource, { type: "opus" });
     }
     static async stop(client)
     {
