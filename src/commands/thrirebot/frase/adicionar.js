@@ -9,7 +9,7 @@ export default {
     execute: async ({ interaction }) => {
         await interaction.deferReply();
         const data = await fetchendpoint(
-            `${process.env.THRIRE_API}/v1/dailyphrase/dailyphrase`,
+            `${process.env.THRIRE_API}/v1/dailyphrase`,
             "POST",
             { 'Content-Type': 'application/json' },
             JSON.stringify({ phrase_text: interaction.options.getString('query') } )
