@@ -12,7 +12,7 @@ export default {
             `${process.env.THRIRE_API}/v1/dailyphrase`,
             "POST",
             { 'Content-Type': 'application/json' },
-            JSON.stringify({ phrase_text: interaction.options.getString('query') } )
+            JSON.stringify({ phrase_text: interaction.options.getString('frase') } )
         )
         if (!data.response) await interaction.editReply({ embeds: [ createembed(null, `❌ Ocorreu um erro ao processar sua requisição.\n\`\`\`${data.error.message}\`\`\``, null, "Red") ] })
         await interaction.editReply({ embeds: [ createembed(`✅ Frase adicionada com sucesso`) ] });
