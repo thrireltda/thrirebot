@@ -4,8 +4,7 @@ import vc from "#facades/vc.js";
 import createsubcommand from "#utils/createsubcommand.js";
 import fetchendpoint from "#utils/fetchendpoint.js";
 
-export default
-{
+export default {
     data: await createsubcommand("play", "Sintoniza uma estação de rádio",
         [
             { type: String, name: "pais", description: "País de onde a rádio transmite", autocomplete: true, required: true },

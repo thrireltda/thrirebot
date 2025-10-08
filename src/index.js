@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import process from 'process';
-import getFFmpegPath from '#services/getFFmpegPath.js';
-import getYtdlpPath from "#services/getYtdlpPath.js";
+import getFFmpegPath from '#utils/getFFmpegPath.js';
+import getYtdlpPath from "#utils/getYtdlpPath.js";
 
 dotenv.config();
 
