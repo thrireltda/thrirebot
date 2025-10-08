@@ -1,10 +1,6 @@
-import { Events } from 'discord.js';
-
-export default
-{
-    name: Events.InteractionCreate,
-    async execute(interaction)
-    {
+export default {
+    name: "interactionCreate",
+    async execute(interaction) {
         const client = interaction.client;
         const commandList = client.commands;
         if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) return;

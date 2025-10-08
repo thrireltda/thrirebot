@@ -1,11 +1,11 @@
 import { SlashCommandSubcommandBuilder } from "@discordjs/builders";
 
-export default async function(name, description, options = null)
-{
+export default async function(name, description, options = null) {
     const command = new SlashCommandSubcommandBuilder();
     if (name) command.setName(name);
     if (description) command.setDescription(description);
-    if (options) for (const option of options) {
+    if (options)
+        for (const option of options) {
             switch (option.type) {
                 case String:
                     command.addStringOption(opt =>

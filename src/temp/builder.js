@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
-import { SlashCommandBuilder } from '@discordjs/builders';
+import createcommand from "#utils/createcommand.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,69 +11,61 @@ export default async function()
 {
     const thrirebotCommand =
     {
-        data: new SlashCommandBuilder()
-            .setName('thrirebot')
-            .setDescription('Comando thrirebot'),
+        data: await createcommand("thrirebot", "Executa ações relacionadas ao thrirebot."),
         executeMap: new Map(),
         groups: new Map()
     };
 
     async function processPath(currentPath, relativeParts = [])
     {
-        const items = await fs.readdir(currentPath, { withFileTypes: true });
-
-        for (const item of items)
+        const dirents = await fs.readdir(currentPath, { withFileTypes: true });
+        for (const dirent of dirents)
         {
-            const fullPath = path.join(currentPath, item.name);
-            const parts = [...relativeParts, item.name.replace('.js', '')];
+            const fullPath = path.join(currentPath, dirent.name);
+            const parts = [...relativeParts, dirent.name.replace('.js', '')];
 
-            if (item.isDirectory())
+            if (dirent.isDirectory())
             {
                 await processPath(fullPath, parts);
                 continue;
             }
 
-            if (!item.name.endsWith('.js')) continue;
+            if (!dirent.name.endsWith('.js')) continue;
 
             const fileUrl = pathToFileURL(fullPath);
             const { default: module } = await import(fileUrl.href);
 
             if (!module?.data)
             {
-                console.warn(`⚠️ Módulo ${item.name} não possui 'data'`);
+                console.warn(`⚠️ Módulo ${dirent.name} não possui 'data'`);
                 continue;
             }
 
             const [command, maybeGroup, maybeSub] = parts;
 
-            if (command !== 'thrirebot') continue;
-
-            // Subcomando direto: /thrirebot atualizar
-            if (parts.length === 2)
+            switch (parts.length)
             {
-                thrirebotCommand.data.addSubcommand(sub => Object.assign(sub, module.data));
-                thrirebotCommand.executeMap.set(maybeGroup, module);
-            }
-
-            // Subcomando em grupo: /thrirebot repo trocar-branch
-            else if (parts.length === 3)
-            {
-                if (!thrirebotCommand.groups.has(maybeGroup))
-                {
-                    thrirebotCommand.groups.set(maybeGroup, new Map());
-                    thrirebotCommand.data.addSubcommandGroup(group =>
-                        group.setName(maybeGroup)
-                            .setDescription(`Grupo ${maybeGroup}`)
-                            .addSubcommand(sub => Object.assign(sub, module.data))
-                    );
-                }
-                else
-                {
-                    const groupBuilder = thrirebotCommand.data.options.find(opt => opt.name === maybeGroup);
-                    groupBuilder?.addSubcommand(sub => Object.assign(sub, module.data));
-                }
-
-                thrirebotCommand.groups.get(maybeGroup).set(maybeSub, module);
+                case 2:
+                    thrirebotCommand.data.addSubcommand(sub => Object.assign(sub, module.data));
+                    thrirebotCommand.executeMap.set(maybeGroup, module);
+                    break;
+                case 3:
+                    if (!thrirebotCommand.groups.has(maybeGroup))
+                    {
+                        thrirebotCommand.groups.set(maybeGroup, new Map());
+                        thrirebotCommand.data.addSubcommandGroup(group =>
+                            group.setName(maybeGroup)
+                                .setDescription(`Grupo ${maybeGroup}`)
+                                .addSubcommand(sub => Object.assign(sub, module.data))
+                        );
+                    }
+                    else
+                    {
+                        const groupBuilder = thrirebotCommand.data.options.find(opt => opt.name === maybeGroup);
+                        groupBuilder?.addSubcommand(sub => Object.assign(sub, module.data));
+                    }
+                    thrirebotCommand.groups.get(maybeGroup).set(maybeSub, module);
+                    break;
             }
         }
     }

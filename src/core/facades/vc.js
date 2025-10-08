@@ -1,24 +1,15 @@
-import {
-    createAudioPlayer,
-    entersState,
-    getVoiceConnection,
-    joinVoiceChannel,
-    VoiceConnectionStatus
-} from "@discordjs/voice";
+import { createAudioPlayer, joinVoiceChannel, entersState, VoiceConnectionStatus, getVoiceConnection } from "@discordjs/voice";
 
-export default class
-{
+export default class {
     static connection;
 
-    static async join(interaction, client)
-    {
+    static async join(interaction, client) {
         client.audioPlayer = await createAudioPlayer();
         client.audioPlayer.musicQueue = [];
         client.audioPlayer.isPlaying = false;
         client.audioPlayer.on('idle', () => client.emit('audioPlayerIdle', interaction, client));
 
-        new Promise(async (resolve) =>
-        {
+        new Promise(async (resolve) => {
             this.connection = await joinVoiceChannel
             ({
                 channelId: interaction.member.voice.channel.id,
@@ -33,8 +24,7 @@ export default class
         })
         .catch(console.error);
     }
-    static async leave(state)
-    {
+    static async leave(state) {
         await getVoiceConnection(state.guild.id)?.destroy();
     }
 }

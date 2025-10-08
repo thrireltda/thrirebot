@@ -1,15 +1,13 @@
-import { Events } from 'discord.js';
-import buildAllCommands from '../services/buildAllCommands.js';
-import scheduleDailyFreeGames from '../services/scheduleDailyFreeGames.js';
+import bldr from "#facades/bldr.js";
+import Scheduler from "#facades/Scheduler.js";
+import scheduleFreeGames from "#utils/scheduleFreeGames.js";
 
-export default
-{
-    name: Events.ClientReady,
+export default {
+    name: "ready",
     once: true,
-    async execute(client)
-    {
-        await buildAllCommands(client);
-        await scheduleDailyFreeGames(client);
+    async execute(client) {
+        await bldr.buildCommandTree(client);
+        await Scheduler.registerJob(client, [scheduleFreeGames])
         console.log(`[BOT] Online como ${client.user.tag}`);
     }
 };

@@ -5,13 +5,10 @@ import createembed from "#utils/createembed.js";
 import invokeFfmpeg from "#utils/invokeFfmpeg.js";
 import invokeYtdlp from "#utils/invokeYtdlp.js";
 
-export default
-{
+export default {
     name: "audioPlayerIdle",
-    async execute(interaction, client)
-    {
-        if (djsv.getQueueSize(client) <= 0)
-        {
+    async execute(interaction, client) {
+        if (djsv.getQueueSize(client) <= 0) {
             if (djsv.getStatus(client) === AudioPlayerStatus.Playing) await djsv.stop();
             return;
         }

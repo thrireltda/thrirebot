@@ -1,5 +1,4 @@
-export default class
-{
+export default class {
     static #_DEFAULT = 0;
     static #_MUSIC = 1;
     static #_RADIO = 2;
