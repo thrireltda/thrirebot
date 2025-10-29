@@ -9,6 +9,7 @@ export default async function(client, entry, data) {
             '-o', '-',
             '--quiet',
             '--no-warnings',
+            '--no-cache-dir',
             data
         ], { stdio: ['ignore', 'pipe', 'inherit'] });
         entry.on("close", () => {
