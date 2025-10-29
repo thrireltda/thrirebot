@@ -10,14 +10,14 @@ export default {
     ]),
     execute: async ({ interaction }) => {
         await interaction.deferReply();
-        const data = await fetchendpoint (
-            `${process.env.THRIRE_API}/v3/ai/generateimage`,
+        const data = await fetchendpoint(
+            `${process.env.THRIRE_API}/generateimage`,
             "POST",
             { 'Content-Type': 'application/json' },
             JSON.stringify({ model: interaction.options.getString('model'), prompt: interaction.options.getString('prompt') })
         )
-        if (!data.response) {
-            await interaction.editReply({ embeds: [ await createembed(null, `❌ Não foi pssível gerar a imagem.\n\`\`\`${data.error.message}\`\`\``, null, "Red") ] })
+        if (data.code !== 200) {
+            await interaction.editReply({ embeds: [ await createembed(null, `❌ Ocorreu um erro ao processar sua requisição.\n\`\`\`${data.response}\`\`\``, null, "Red") ] })
             return;
         }
         await interaction.editReply({ files: [ await createattachment(Buffer.from(data.response, "base64")) ] });
@@ -27,7 +27,7 @@ export default {
         const value = interaction.options.getFocused(true).value.toLowerCase();
         switch (name) {
             case 'model':
-                const data = await fetchendpoint(`${process.env.THRIRE_API}/v3/ai/models?opt=1`);
+                const data = await fetchendpoint(`${process.env.THRIRE_API}/aimodels?opt=1`);
                 if (data === undefined) break;
                 await interaction.respond(data.models.filter(c => c.name.toLowerCase().includes(value)).map(c => ({ name: c.name, value: c.name })));
                 break;

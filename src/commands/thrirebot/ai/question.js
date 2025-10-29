@@ -17,18 +17,18 @@ export default {
     execute: async ({ interaction, client }) =>  {
         await interaction.deferReply();
         const data = await fetchendpoint(
-            `${process.env.THRIRE_API}/v3/ai/askquestion`,
+            `${process.env.THRIRE_API}/askquestion`,
             "POST",
             { 'Content-Type': 'application/json' },
-            JSON.stringify({ model: interaction.options.getString('model'), prompt: interaction.options.getString('prompt'), search: interaction.options.getString('usarweb') === 'true' })
+            JSON.stringify({ model: interaction.options.getString('model'), prompt: interaction.options.getString('prompt'), search: interaction.options.getString('search') === 'true' })
         )
-        if (!data.response) {
-            await interaction.editReply({ embeds: [ await createembed(null, `❌ Não foi possível se conectar com a API.\n\`\`\`${data.error.message}\`\`\``, null, "Red") ] })
+        if (data.code !== 200) {
+            await interaction.editReply({ embeds: [ await createembed(null, `❌ Ocorreu um erro ao processar sua requisição.\n\`\`\`${data.response}\`\`\``, null, "Red") ] })
             return;
         }
         await interaction.editReply({ embeds: [ await createembed(null, `${data.response}`) ] });
         if (!interaction.member.voice.channel) return;
-        if (!vc.connection) await vc.join(interaction, client);
+        if (!vc.getConnection(interaction)) await vc.join(interaction, client);
         if (djsv.getStatus(client) === AudioPlayerStatus.Playing && djsv.audioType !== AudioType.ESPEAK) return;
         const ffmpeg = await invokeFfmpeg(client);
         const stdout = await invokeEspeakng(client, ffmpeg, data.response);
@@ -39,7 +39,7 @@ export default {
         const value = interaction.options.getFocused(true).value.toLowerCase();
         switch (name) {
             case 'model':
-                const data = await fetchendpoint(`${process.env.THRIRE_API}/v3/ai/models?opt=0`)
+                const data = await fetchendpoint(`${process.env.THRIRE_API}/aimodels?opt=0`)
                 if (data === undefined) break;
                 await interaction.respond(data.models.filter(c => c.name.toLowerCase().includes(value)).map(c => ({ name: c.name, value: c.name })));
                 break;

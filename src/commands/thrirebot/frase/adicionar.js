@@ -9,12 +9,15 @@ export default {
     execute: async ({ interaction }) => {
         await interaction.deferReply();
         const data = await fetchendpoint(
-            `${process.env.THRIRE_API}/v1/dailyphrase`,
+            `${process.env.THRIRE_API}/dailyphrase`,
             "POST",
             { 'Content-Type': 'application/json' },
             JSON.stringify({ phrase_text: interaction.options.getString('frase') } )
         )
-        if (!data.response) await interaction.editReply({ embeds: [ createembed(null, `❌ Ocorreu um erro ao processar sua requisição.\n\`\`\`${data.error.message}\`\`\``, null, "Red") ] })
-        await interaction.editReply({ embeds: [ createembed(`✅ Frase adicionada com sucesso`) ] });
+        if (data.code !== 200) {
+            await interaction.editReply({ embeds: [ await createembed(null, `❌ Ocorreu um erro ao processar sua requisição.\n\`\`\`${data.response}\`\`\``, null, "Red")]})
+            return;
+        }
+        await interaction.editReply({ embeds: [ await createembed(null, `✅ Frase adicionada com sucesso`) ] });
     }
 };

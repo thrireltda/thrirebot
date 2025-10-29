@@ -1,8 +1,9 @@
 import { createAudioPlayer, joinVoiceChannel, entersState, VoiceConnectionStatus, getVoiceConnection } from "@discordjs/voice";
 
 export default class {
-    static connection;
-
+    static getConnection(interaction) {
+        return getVoiceConnection(interaction.guild.id);
+    }
     static async join(interaction, client) {
         client.audioPlayer = await createAudioPlayer();
         client.audioPlayer.musicQueue = [];
@@ -10,7 +11,7 @@ export default class {
         client.audioPlayer.on('idle', () => client.emit('audioPlayerIdle', interaction, client));
 
         new Promise(async (resolve) => {
-            this.connection = await joinVoiceChannel
+            await joinVoiceChannel
             ({
                 channelId: interaction.member.voice.channel.id,
                 guildId: interaction.guildId,
@@ -18,13 +19,13 @@ export default class {
                 selfDeaf: false,
                 selfMute: false
             });
-            await entersState(this.connection, VoiceConnectionStatus.Ready, 10_000);
-            this.connection.subscribe(client.audioPlayer);
+            await entersState(this.getConnection(interaction), VoiceConnectionStatus.Ready, 10_000);
+            this.getConnection(interaction).subscribe(client.audioPlayer);
             resolve();
         })
         .catch(console.error);
     }
-    static async leave(state) {
-        await getVoiceConnection(state.guild.id)?.destroy();
+    static async leave(interaction) {
+        await this.getConnection(interaction)?.destroy();
     }
 }

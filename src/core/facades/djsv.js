@@ -21,7 +21,7 @@ export default class {
     static async stop(client) {
         client.audioPlayer.musicQueue = [];
         this.audioType = AudioType.DEFAULT;
-        await client.audioPlayer?.stop();
+        await client.audioPlayer?.stop(true);
     }
     static async pause(client) {
         client.audioPlayer?.pause();
@@ -30,6 +30,7 @@ export default class {
         client.audioPlayer?.unpause();
     }
     static async skip(interaction, client) {
-        client.emit("audioPlayerIdle", interaction);
+        this.audioType = AudioType.DEFAULT;
+        await client.audioPlayer?.stop(true);
     }
 }
