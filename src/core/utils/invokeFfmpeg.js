@@ -10,7 +10,7 @@ export default async function(client) {
             "-c:a", "libopus",
             "-f", "opus",
             "pipe:1"
-        ]);
+        ], { cwd: "./.cache" });
         client.audioPlayer.once("stateChange", (oldState, newState) => {
             if (newState.status === "idle" && djsv.audioType !== AudioType.ESPEAK) ffmpeg.kill("SIGKILL");
         });

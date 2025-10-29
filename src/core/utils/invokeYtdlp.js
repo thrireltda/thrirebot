@@ -9,9 +9,8 @@ export default async function(client, entry, data) {
             '-o', '-',
             '--quiet',
             '--no-warnings',
-            '--no-cache-dir',
             data
-        ], { stdio: ['ignore', 'pipe', 'inherit'] });
+        ], { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, XDG_CACHE_HOME: "./.cache" } });
         entry.on("close", () => {
             ytdlp.kill("SIGKILL");
         })
