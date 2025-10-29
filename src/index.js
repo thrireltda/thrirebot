@@ -34,5 +34,8 @@ for (const file of eventFiles)
     else client.on(event.name, (...args) => event.execute(...args, client));
 }
 
+if (!fs.existsSync("./.cache"))
+    await fs.mkdirSync("./.cache");
+
 // Inicia o bot
 client.login(process.env.TOKEN);
