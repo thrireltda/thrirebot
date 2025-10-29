@@ -12,7 +12,7 @@ export default {
     ]),
     execute: async ({ interaction, client }) => {
         await interaction.deferReply();
-        if (!vc.connection) await vc.join(interaction, client);
+        if (!vc.getConnection(interaction)) await vc.join(interaction, client);
         if (djsv.getStatus(client) === AudioPlayerStatus.Playing && djsv.audioType !== AudioType.MUSIC) await djsv.stop(client);
         const query = interaction.options.getString("query");
         const queryResults = await ytSearch(query);

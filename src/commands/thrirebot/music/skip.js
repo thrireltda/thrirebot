@@ -5,7 +5,7 @@ export default {
     data: await createsubcommand("skip", "Pula a música / playlist tocando."),
     execute: async ({ interaction, client }) => {
         await interaction.deferReply()
-        await djsv.skip(client);
+        await djsv.skip(interaction, client);
         await interaction.deleteReply();
     }
 };

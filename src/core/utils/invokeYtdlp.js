@@ -1,15 +1,23 @@
 import { spawn } from "child_process";
+import djsv from "#facades/djsv.js";
+import AudioType from "#enums/AudioType.js";
 
 export default async function(client, entry, data) {
     return new Promise(async (resolve) => {
-        const command = await spawn("yt-dlp", [
+        const ytdlp =  spawn("yt-dlp", [
             '-f', 'bestaudio[ext=webm]/bestaudio',
             '-o', '-',
             '--quiet',
             '--no-warnings',
             data
         ], { stdio: ['ignore', 'pipe', 'inherit'] });
-        command.stdout.pipe(entry.stdin);
+        entry.on("close", () => {
+            ytdlp.kill("SIGKILL");
+        })
+        client.audioPlayer.once("stateChange", (oldState, newState) => {
+            if (newState.status === "idle" && djsv.audioType !== AudioType.ESPEAK) ytdlp.kill("SIGKILL");
+        });
+        ytdlp.stdout.pipe(entry.stdin);
         resolve(entry.stdout);
     })
 }

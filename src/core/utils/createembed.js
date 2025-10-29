@@ -1,6 +1,6 @@
 import { EmbedBuilder } from "discord.js";
 
-export default async function(title, description, thumbnail, color, footer, timestamp = false) {
+export default async function(title, description, thumbnail, color, footer, timestamp) {
     const embed = new EmbedBuilder();
     if (title) embed.setTitle(title);
     if (description) embed.setDescription(description);
