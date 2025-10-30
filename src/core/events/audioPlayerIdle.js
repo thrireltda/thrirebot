@@ -9,7 +9,8 @@ export default {
     name: "audioPlayerIdle",
     async execute(interaction, client) {
         if (djsv.getQueueSize(client) <= 0) {
-            if (djsv.getStatus(client) === AudioPlayerStatus.Playing) await djsv.stop();
+            if (djsv.getStatus(client) === AudioPlayerStatus.Playing)
+                await djsv.stop();
             return;
         }
         const track = djsv.popFromQueue(client);
