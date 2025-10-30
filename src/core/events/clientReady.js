@@ -3,7 +3,7 @@ import Scheduler from "#facades/Scheduler.js";
 import scheduleFreeGames from "#utils/scheduleFreeGames.js";
 
 export default {
-    name: "ready",
+    name: "clientReady",
     once: true,
     async execute(client) {
         await bldr.buildCommandTree(client);

@@ -14,9 +14,6 @@ export default async function(client, entry, data) {
         entry.on("close", () => {
             ytdlp.kill("SIGKILL");
         })
-        client.audioPlayer.once("stateChange", (oldState, newState) => {
-            if (newState.status === "idle" && djsv.audioType !== AudioType.ESPEAK) ytdlp.kill("SIGKILL");
-        });
         ytdlp.stdout.pipe(entry.stdin);
         resolve(entry.stdout);
     })
