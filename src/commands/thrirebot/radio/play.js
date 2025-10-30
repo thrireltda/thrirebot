@@ -3,6 +3,8 @@ import vc from "#facades/vc.js";
 import fetchendpoint from "#utils/fetchendpoint.js";
 import djsv from "#facades/djsv.js";
 import AudioType from "#enums/AudioType.js";
+import invokeFfmpeg from "#utils/invokeFfmpeg.js";
+import invokeYtdlp from "#utils/invokeYtdlp.js";
 
 export default {
     data: await createsubcommand("play", "Sintoniza uma estação de rádio", [
@@ -13,7 +15,9 @@ export default {
         await interaction.deferReply();
         if (!vc.getConnection(interaction)) await vc.join(interaction, client);
         const data = await fetchendpoint(`${process.env.THRIRE_API}/stationsbyuuid?stationuuid=${interaction.options.getString("frequencia")}`)
-        await djsv.play(client, data.response.url, AudioType.RADIO)
+        const ffmpeg = await invokeFfmpeg(client);
+        const stdout = await invokeYtdlp(client, ffmpeg, data.response.url)
+        await djsv.play(client, stdout, AudioType.RADIO);
         await interaction.editReply(`📻 Sintonizando **${data.response.name}**`);
     },
     autocomplete: async ({ interaction }) => {
