@@ -15,9 +15,7 @@ export default {
         await interaction.deferReply();
         if (!vc.getConnection(interaction)) await vc.join(interaction, client);
         const data = await fetchendpoint(`${process.env.THRIRE_API}/stationsbyuuid?stationuuid=${interaction.options.getString("frequencia")}`)
-        const ffmpeg = await invokeFfmpeg(client);
-        const stdout = await invokeYtdlp(client, ffmpeg, data.response.url)
-        await djsv.play(client, stdout, AudioType.RADIO)
+        await djsv.play(client, data.response.url, AudioType.RADIO)
         await interaction.editReply(`📻 Sintonizando **${data.response.name}**`);
     },
     autocomplete: async ({ interaction }) => {
