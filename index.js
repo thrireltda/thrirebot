@@ -13,10 +13,6 @@ const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'
 
 global.appRoot = path.resolve(import.meta.dirname);
 
-const ffmpegBinPath = path.dirname(getFFmpegPath());
-const ytdlpBinPath = path.dirname(getYtdlpPath());
-process.env.PATH = `${ffmpegBinPath}${path.delimiter}${ytdlpBinPath}${path.delimiter}${process.env.PATH}`;
-
 dotenv.config();
 for (const file of eventFiles)
 {
