@@ -5,7 +5,7 @@ import scheduleFreeGames from "#utils/scheduleFreeGames.js";
 export default {
     name: "clientReady",
     once: true,
-    async execute(client) {
+    async execute(client, interaction) {
         await bldr.buildCommandTree(client);
         await Scheduler.registerJob(client, [scheduleFreeGames])
         console.log(`[BOT] Online como ${client.user.tag}`);

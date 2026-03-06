@@ -9,7 +9,7 @@ export default class {
         const data = await createcommand("thrirebot", "Executa ações relacionadas ao thrirebot.");
         const subcommands = new Map(), groups = new Map();
         const files = await getjsfiles(import.meta.url, "../../commands/thrirebot", 2);
-        for (const file of files)
+        for (const file of files) {
             switch (pathToFileURL(join(import.meta.url, "../../commands/thrirebot")) === file.rootPath) {
                 case true:
                     data.addSubcommand(sub => Object.assign(sub, file.content.data));
@@ -34,19 +34,20 @@ export default class {
                     groups.get(group).set(file.content.data.name, file);
                     break;
             }
-        const execute = async ({ interaction, client }) => {
+        }
+        const execute = async (client, interaction) => {
             const group = interaction.options.getSubcommandGroup(false);
             const subcommand = interaction.options.getSubcommand(false);
             let handler = group && groups.get(group)?.has(subcommand) ? groups.get(group).get(subcommand) : subcommands.get(subcommand);
             if (handler === null || handler === undefined) return interaction.reply({ content: '❌ Comando não encontrado.', ephemeral: true });
-            return handler.content.execute({ interaction, client });
+            return handler.content.execute(client, interaction);
         };
-        const autocomplete = async ({ interaction, client }) => {
+        const autocomplete = async (client, interaction) => {
             const group = interaction.options.getSubcommandGroup(false);
             const subcommand = interaction.options.getSubcommand(false);
             let handler = group && groups.get(group)?.has(subcommand) ? groups.get(group).get(subcommand) : subcommands.get(subcommand);
             if (handler === null || handler === undefined) return;
-            return handler.content.autocomplete({ interaction, client });
+            return handler.content.autocomplete(client, interaction);
         };
         client.commands = [{ data: data, subcommands: subcommands, groups: groups, execute: execute, autocomplete: autocomplete }];
         const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);

@@ -8,15 +8,13 @@ export default class {
     static getQueue = client => client.audioPlayer?.musicQueue;
     static getQueueSize = client => this.getQueue(client).length;
     static popFromQueue = client => this.getQueue(client).shift();
-    static async addToQueue(interaction, client, result) {
+    static async addToQueue(result, client, interaction) {
         await client.audioPlayer?.musicQueue.push(result);
-        if (this.getStatus(client) !== AudioPlayerStatus.Idle) return;
-        client.emit("audioPlayerIdle", interaction);
+        client.emit("playerQueueIncreased", interaction);
     }
     static async play(client, source, audioType = AudioType.DEFAULT) {
         this.audioType = audioType
-        const resource = createAudioResource(source, { inputType: StreamType.OggOpus, opusEncoded: true });
-        await client.audioPlayer?.play(resource);
+        await client.audioPlayer?.play(createAudioResource(source, { inputType: StreamType.OggOpus, opusEncoded: true }));
     }
     static async stop(client) {
         client.audioPlayer.musicQueue = [];
@@ -29,7 +27,7 @@ export default class {
     static async unpause(client) {
         client.audioPlayer?.unpause();
     }
-    static async skip(interaction, client) {
+    static async skip(client) {
         this.audioType = AudioType.DEFAULT;
         await client.audioPlayer?.stop(true);
     }
