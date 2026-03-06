@@ -3,9 +3,9 @@ import createsubcommand from "#utils/createsubcommand.js";
 
 export default {
     data: await createsubcommand("skip", "Pula a música / playlist tocando."),
-    execute: async ({ interaction, client }) => {
+    execute: async (client, interaction) => {
         await interaction.deferReply()
-        await djsv.skip(interaction, client);
+        await djsv.skip(client);
         await interaction.deleteReply();
     }
 };

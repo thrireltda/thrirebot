@@ -9,8 +9,9 @@ export default async function(endpoint, method = "GET", headers = null, body = n
             error.status = response.status;
             throw error;
         }
-        for (const [name, value] of response.headers)
-            console.log(`${name}: ${value}`);
+        // todo: verbose logging
+        //for (const [name, value] of response.headers)
+          //  console.log(`${name}: ${value}`);
 
         return response.json();
     })

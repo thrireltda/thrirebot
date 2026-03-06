@@ -3,22 +3,20 @@ import vc from "#facades/vc.js";
 import fetchendpoint from "#utils/fetchendpoint.js";
 import djsv from "#facades/djsv.js";
 import AudioType from "#enums/AudioType.js";
-import invokeFfmpeg from "#utils/invokeFfmpeg.js";
-import invokeYtdlp from "#utils/invokeYtdlp.js";
 
 export default {
     data: await createsubcommand("play", "Sintoniza uma estação de rádio", [
         { type: String, name: "pais", description: "País de onde a rádio transmite", autocomplete: true, required: true },
         { type: String, name: "frequencia", description: "Frequência da estação", autocomplete: true, required: true },
     ]),
-    execute: async ({ client, interaction }) => {
+    execute: async (client, interaction) => {
         await interaction.deferReply();
-        if (!vc.getConnection(interaction)) await vc.join(interaction, client);
+        if (!vc.getConnection(interaction)) await vc.join(client, interaction);
         const data = await fetchendpoint(`${process.env.THRIRE_API}/stationsbyuuid?stationuuid=${interaction.options.getString("frequencia")}`)
-        await djsv.play(client, data.response.url, AudioType.RADIO)
+        await djsv.play(client, data.response.url, AudioType.RADIO);
         await interaction.editReply(`📻 Sintonizando **${data.response.name}**`);
     },
-    autocomplete: async ({ interaction }) => {
+    autocomplete: async (client, interaction) => {
         const name = interaction.options.getFocused(true).name.toLowerCase();
         const value = interaction.options.getFocused(true).value.toLowerCase();
         switch (name) {

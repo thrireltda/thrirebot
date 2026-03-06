@@ -3,8 +3,7 @@ import djsv from "#facades/djsv.js";
 
 export default {
     data: await createsubcommand("stop", "Para a rádio. "),
-    execute: async ({ client, interaction }) => {
-        // todo: checar se rádio está tocando
+    execute: async (client, interaction) => {
         await interaction.deferReply()
         await djsv.stop(client);
         await interaction.deleteReply();

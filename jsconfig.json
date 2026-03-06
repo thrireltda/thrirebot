@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "node20",
+    "jsx": "preserve",
+    "checkJs": true
+  },
+  "javascript.suggest.autoImports": true,
+  "javascript.suggest.includeCompletionsForImportStatements": true
+}
