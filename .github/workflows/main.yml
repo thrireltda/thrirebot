@@ -1,0 +1,16 @@
+on: [push]
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ] 
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - name: install
+        run: npm install
+      - name: build
+        run: npm build
+      - name: test
+        run: npm test
